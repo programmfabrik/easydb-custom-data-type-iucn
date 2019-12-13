@@ -1,0 +1,18 @@
+plugin:
+  name: custom-data-type-iucn
+  version: 1.0
+  url: https://github.com/programmfabrik/easydb-custom-data-type-iucn
+  displayname:
+    de-DE: IUCN
+    en-US: IUCN
+  info:
+    de-DE: IUCN
+    en-US: IUCN
+  server:
+    api-version:
+      require: 1
+  webfrontend:
+    url: custom-data-type-iucn.js
+    css: custom-data-type-iucn.css
+    logo: image/logo.png
+    l10n: l10n/
