@@ -6,6 +6,9 @@ class CustomDataTypeIUCN extends CustomDataType
 	getCustomDataTypeNameLocalized: ->
 		return	$$("custom.data.type.iucn.name")
 
+	getCustomDataOptionsInDatamodelInfo: ->
+		return []
+
 	renderEditorInput: (data) ->
 
 	renderDetailOutput: (data, _, opts) ->
@@ -17,5 +20,4 @@ class CustomDataTypeIUCN extends CustomDataType
 
 		return save_data[@name()] = IUCNUtil.getSaveData(data)
 
-ez5.session_ready =>
-	BaseConfig.registerPlugin(new CustomDataTypeIUCN())
+CustomDataType.register(CustomDataTypeIUCN)

@@ -16,3 +16,47 @@ plugin:
     css: custom-data-type-iucn.css
     logo: image/logo.png
     l10n: l10n/
+
+base_config:
+  - name: iucn_api_settings
+    group: iucn
+    parameters:
+      api_url:
+        type: text
+        position: 0
+      api_token:
+        type: text
+        position: 1
+  - name: iucn_easydb_settings
+    group: iucn
+    parameters:
+      easydb_login:
+        type: text
+        position: 2
+      easydb_password:
+        type: text
+        position: 3
+  - name: iucn_settings
+    group: iucn
+    parameters:
+      tag_red:
+        type: text
+        position: 4
+        plugin_type: "iucn_tag"
+      tag_unclear:
+        type: text
+        position: 5
+        plugin_type: "iucn_tag"
+      objecttypes:
+        type: table
+        position: 6
+        fields:
+          - name: objecttype_direct
+            type: text
+            position: 0
+            plugin_type: "iucn_objecttype"
+          - name: objecttype_with_link
+            type: text
+            position: 1
+            plugin_type: "iucn_objecttype_link"
+

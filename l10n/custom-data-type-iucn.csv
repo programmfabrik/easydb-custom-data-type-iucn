@@ -1,2 +1,16 @@
 key,de-DE,en-US,it-IT,es-ES
-custom.data.type.iucn.name,IUCN,IUCN,IUCN,IUCN
+custom.data.type.iucn.name,IUCN,IUCN,,
+,,,,
+server.config.group.system.iucn.title,IUCN,IUCN,,
+server.config.group.system.iucn.introduction,IUCN configuration,IUCN configuration,,
+server.config.name.system.iucn_api_settings,API settings,API settings,,
+server.config.name.system.iucn_easydb_settings,EasyDB Settings,EasyDB Settings,,
+server.config.name.system.iucn_settings,Settings,Settings,,
+server.config.parameter.system.iucn_api_settings.api_url.label,URL,URL,,
+server.config.parameter.system.iucn_api_settings.api_token.label,Token,Token,,
+server.config.parameter.system.iucn_easydb_settings.easydb_login.label,Username,Username,,
+server.config.parameter.system.iucn_easydb_settings.easydb_password.label,Password,Password,,
+server.config.parameter.system.iucn_settings.tag_red.label,Red list tag,Red list tag,,
+server.config.parameter.system.iucn_settings.tag_unclear.label,Unclear tag,Unclear tag,,
+server.config.parameter.system.iucn_settings.tag.placeholder.tag_red,Select red list tag,Select red list tag,,
+server.config.parameter.system.iucn_settings.tag.placeholder.tag_unclear,Select unclear tag,Select unclear tag,,
