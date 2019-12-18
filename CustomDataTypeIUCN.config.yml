@@ -40,11 +40,11 @@ base_config:
     group: iucn
     parameters:
       tag_red:
-        type: text
+        type: int
         position: 4
         plugin_type: "iucn_tag"
       tag_unclear:
-        type: text
+        type: int
         position: 5
         plugin_type: "iucn_tag"
       objecttypes:
@@ -52,11 +52,11 @@ base_config:
         position: 6
         fields:
           - name: objecttype_direct
-            type: text
+            type: int
             position: 0
             plugin_type: "iucn_objecttype"
           - name: objecttype_with_link
-            type: text
+            type: int
             position: 1
             plugin_type: "iucn_objecttype_link"
 
