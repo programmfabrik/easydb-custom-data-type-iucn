@@ -1,0 +1,33 @@
+.ez5-custom-data-type-iucn {
+
+  &-search-button .cui-button-visual {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-left: none;
+  }
+
+  &-search-input input {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+  }
+
+  &-card {
+    .cui-horizontal-layout-left {
+      background-color: hsl(205,5%,93%);
+      width: 110px;
+      height: 60px;
+
+      img {
+        margin: 7px;
+        height: 48px
+      }
+    }
+
+    .cui-horizontal-layout-right {
+      .ez5-tag {
+        margin-top: 5px;
+        margin-right: 5px;
+      }
+    }
+  }
+}

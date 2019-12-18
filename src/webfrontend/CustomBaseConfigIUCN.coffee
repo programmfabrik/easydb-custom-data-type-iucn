@@ -1,4 +1,4 @@
-class CustomBaseConfigIUCN extends BaseConfigPlugin
+class ez5.CustomBaseConfigIUCN extends BaseConfigPlugin
 
 	getFieldDefFromParm: (baseConfig, fieldName, def) ->
 		switch def.plugin_type
@@ -84,4 +84,4 @@ class CustomBaseConfigIUCN extends BaseConfigPlugin
 
 
 ez5.session_ready =>
-	BaseConfig.registerPlugin(new CustomBaseConfigIUCN())
+	BaseConfig.registerPlugin(new ez5.CustomBaseConfigIUCN())
