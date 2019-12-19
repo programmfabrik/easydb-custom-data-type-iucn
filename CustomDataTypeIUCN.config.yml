@@ -17,6 +17,14 @@ plugin:
     logo: image/logo.png
     l10n: l10n/
 
+custom_types:
+  iucn:
+    update:
+      script: build/scripts/iucn-update.js
+      timeout: 10
+      batch_size: 1000
+      interval_base_config: update_interval_iucn.days
+
 base_config:
   - name: iucn_api_settings
     group: iucn

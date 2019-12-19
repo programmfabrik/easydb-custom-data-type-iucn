@@ -1,10 +1,21 @@
 class ez5.IUCNUtil
 
 	@ENDPOINT_SPECIES = "/species/"
+	@ENDPOINT_SPECIES_ID = "/species/id/"
 
-	@searchBySpecies: (species) ->
-		apiSettings = ez5.IUCNUtil.getApiSettings()
+	@searchBySpecies: (species, apiSettings) ->
+		if not apiSettings
+			apiSettings = ez5.IUCNUtil.getApiSettings()
 		url = apiSettings.api_url + ez5.IUCNUtil.ENDPOINT_SPECIES + species + "?token=" + apiSettings.api_token
+		return ez5.IUCNUtil.get(url)
+
+	@searchBySpeciesId: (id, apiSettings) ->
+		if not apiSettings
+			apiSettings = ez5.IUCNUtil.getApiSettings()
+		url = apiSettings.api_url + ez5.IUCNUtil.ENDPOINT_SPECIES_ID + id + "?token=" + apiSettings.api_token
+		return ez5.IUCNUtil.get(url)
+
+	@get: (url) ->
 		xhr = new CUI.XHR
 			method: "GET"
 			url: url
@@ -16,6 +27,12 @@ class ez5.IUCNUtil
 		object.mainCommonName = data.main_common_name
 		object.redList = true # TODO: set true, false. for unclear maybe add a new attribute.
 		return object
+
+	@isEqual: (objectOne, objectTwo) ->
+		for key in ["idTaxon", "scientificName", "mainCommonName", "redList"]
+			if not CUI.util.isEqual(objectOne[key], objectTwo[key])
+				return false
+		return true
 
 	@getSaveData: (data) ->
 		saveData =
