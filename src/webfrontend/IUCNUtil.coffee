@@ -3,6 +3,9 @@ class ez5.IUCNUtil
 	@ENDPOINT_SPECIES = "/species/"
 	@ENDPOINT_SPECIES_ID = "/species/id/"
 
+	@getFieldType: ->
+		return "custom:base.custom-data-type-iucn.iucn"
+
 	@searchBySpecies: (species, apiSettings) ->
 		if not apiSettings
 			apiSettings = ez5.IUCNUtil.getApiSettings()

@@ -1,7 +1,7 @@
 class CustomDataTypeIUCN extends CustomDataType
 
 	getCustomDataTypeName: ->
-		return "custom:base.custom-data-type-iucn.iucn"
+		return ez5.IUCNUtil.getFieldType()
 
 	getCustomDataTypeNameLocalized: ->
 		return	$$("custom.data.type.iucn.name")

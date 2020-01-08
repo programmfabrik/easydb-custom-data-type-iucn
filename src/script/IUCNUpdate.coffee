@@ -9,10 +9,29 @@ class IUCNUpdate
 		# TODO: Do a validation for the token configured in the database.
 		# I found that the response of the API returns 200 - 'message': "Token not valid!" if it is wrong (not error)
 		@__login(data).done((response) =>
-			ez5.respondSuccess(
-				# The fetch of the schema could be here as well, but maybe it is not a good idea because it is big.
-				state: easydbToken: response.token
-			)
+			easydbToken = response.token
+			if not easydbToken
+				ez5.respondError("custom.data.type.iucn.start-update.error.easydb-token-empty")
+				return
+
+			systemConfig = response?.config?.base?.system
+			if not systemConfig
+				ez5.respondError("custom.data.type.iucn.start-update.error.system-config-empty")
+				return
+
+			state =
+				easydbToken: easydbToken
+				config: {}
+
+			# TODO: Maybe it is not necessary to save more stuff than the token in the state because it could be included
+			# in the update request.
+			for settingsKey in ["iucn_settings", "iucn_easydb_settings", "iucn_api_settings"]
+				if not systemConfig[settingsKey]
+					ez5.respondError("custom.data.type.iucn.start-update.error.#{settingsKey}-empty")
+					return
+				state.config[settingsKey] = systemConfig[settingsKey]
+
+			ez5.respondSuccess(state: state)
 		).fail((error) =>
 			ez5.respondError("custom.data.type.iucn.start-update.error.login", error: error.response?.data or error)
 		)
@@ -139,17 +158,105 @@ class IUCNUpdate
 		)
 
 		CUI.whenAll([chunkByName, chunkById]).done( =>
-			@__updateTags(objectsToUpdateTags).done(=>
+			@__updateTags(objectsToUpdateTags, schema, data).done(=>
 				ez5.respondSuccess({payload: objectsToUpdate})
-			) # TODO: When the update fails, update objects anyways?
+			).fail((messageKey) =>
+				# TODO: When the update fails, update objects anyways? or error?
+				ez5.respondError(messageKey)
+			)
 		)
 
-	__updateTags: (objects) ->
+	__updateTags: (objects, schema, data) ->
+		objecttypes = data.server_config.iucn_settings?.objecttypes
+		if not objecttypes
+			return CUI.resolvedPromise() # No objects will be updated. #TODO: Show error instead?
+
+		iucnType = ez5.IUCNUtil.getFieldType()
+
+		tablesById = {}
+		for table in schema.tables
+			tablesById[table.table_id] = table
+
+		# data.server_config.iucn_settings.objecttypes (array)
+		# objecttype_direct is the id of the ot that contains a field of iucn custom data type
+		# objecttype_with_link is the id of the ot that contains objecttype_direct as linked object.
+
+		for objecttype in data.server_config.iucn_settings.objecttypes
+			# Table with IUCN columns.
+			tableDirect = tablesById[objecttype.objecttype_direct]
+			# Table with links to tableDirect.
+			tableLink = tablesById[objecttype.objecttype_with_link]
+
+			if not tableDirect?.columns # Table does not exist.
+				continue
+
+			# TODO: Perhaps instead of saving the columns, it would be nice to build the search request
+			# and keep a map with the references to the values to change then dinamically afterwards in the chunk work.
+			# Or just move everything to a method and re-use it with every value.
+			# Or build an structure prepared to generate the search easily.
+			columns = []
+			for column in tableDirect.columns
+				if not column.type == iucnType
+					continue
+
+				if column.kind == "link" and tablesById[column.other_table_id] # Nested field.
+					nestedTable = tablesById[column.other_table_id]
+#					nestedTable.columns # TODO: How many levels of nested?
+
+					# TODO: If nested does not contain a column, skip as well.
+					continue
+
+				columns.push(column)
+
+			if columns.length == 0 # No IUCN columns found.
+				continue
+
+			if not tableLink?.foreign_keys
+				continue
+
+			for foreignKey in tableLink.foreign_keys
+				if not tableLink.columns or foreignKey.referenced_table?.table_id != tableDirect.table_id
+					continue
+
+				column = tableLink.columns.find((column) -> column.column_id == foreignKey.columns[0].column_id)
+				if not column or column.type != "link"
+					continue
+
+				# Linked table found in the 'column'.
+				# column is the field where the linked object to the direct table is.
+				# TODO: add the search.
+				# I think it should be a second search, where it searches for results of the previous one.
+
+
 		return CUI.chunkWork.call(@,
 			items: objects
 			chunk_size: 1
 			call: (items) =>
 				#TODO: Implement the search and the update of tags.
+				item = items[0]
+
+				# Example of item
+				#				"identifier": "1",
+				#				"data": {
+				#					"idTaxon": 12392,
+				#					"scientificName": "Loxodonta africana",
+				#					"mainCommonName": "African Elephant",
+				#					"redList": true,
+				#					"_fulltext": {
+				#						"text": "Loxodonta africana African Elephant",
+				#						"string": "12392"
+				#					},
+				#					"_standard": {
+				#						"text": "Loxodonta africana"
+				#					},
+				#					"__updateTags": true
+				#				}
+
+				# It is necessary to search objects that contains objects with the same idTaxon in the fields specified in the config
+				# How to search when the field is a custom data type? Maybe use the standard and save the id in the _standard?
+				# (atm the standard contains the scientific name)
+
+
 		)
 
 	main: (data) ->
@@ -157,8 +264,8 @@ class IUCNUpdate
 			ez5.respondError("custom.data.type.iucn.update.error.payload-missing")
 			return
 
-		for key in ["action", "server_config", "plugin_config"]
-			if (!data[key])
+		for key in ["action", "plugin_config", "server_config"]
+			if (not data[key])
 				ez5.respondError("custom.data.type.iucn.update.error.payload-key-missing", {key: key})
 				return
 
