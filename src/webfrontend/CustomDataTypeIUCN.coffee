@@ -9,6 +9,70 @@ class CustomDataTypeIUCN extends CustomDataType
 	getCustomDataOptionsInDatamodelInfo: ->
 		return []
 
+	renderSearchInput: (data, opts={}) ->
+		return new SearchToken(
+			column: @
+			data: data
+			fields: opts.fields
+		).getInput().DOM
+
+	getFieldNamesForSearch: ->
+		@__getFieldNames()
+
+	getFieldNamesForSuggest: ->
+		@__getFieldNames()
+
+	getSearchFilter: (data, key=@name()) ->
+		if data[key+":unset"]
+			filter =
+				type: "in"
+				fields: [ @fullName()+".scientificName" ]
+				in: [ null ]
+			filter._unnest = true
+			filter._unset_filter = true
+			return filter
+
+		filter = super(data, key)
+		if filter
+			return filter
+
+		if CUI.util.isEmpty(data[key])
+			return
+
+		val = data[key]
+		[str, phrase] = Search.getPhrase(val)
+
+		switch data[key+":type"]
+			when "token", "fulltext", undefined
+				filter =
+					type: "match"
+					mode: data[key+":mode"]
+					fields: @getFieldNamesForSearch()
+					string: str
+					phrase: phrase
+			when "field"
+				filter =
+					type: "in"
+					fields: @getFieldNamesForSearch()
+					in: [ str ]
+		filter
+
+	__getFieldNames: ->
+		fieldNames = [
+			@fullName()+".idTaxon"
+			@fullName()+".scientificName"
+			@fullName()+".mainCommonName"
+		]
+		return fieldNames
+
+	getQueryFieldBadge: (data) =>
+		if data["#{@name()}:unset"]
+			value = $$("text.column.badge.without")
+		else
+			value = data[@name()]
+		name: @nameLocalized()
+		value: value
+
 	renderEditorInput: (data) ->
 		# TODO: Show error label when API url is not set. ez5.IUCNUtil.getApiSettings() api_url api_token
 		data = @__initData(data)

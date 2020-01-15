@@ -25,7 +25,7 @@ class ez5.IUCNUtil
 		return xhr.start()
 
 	@setObjectData: (object, data) ->
-		object.idTaxon = data.taxonid
+		object.idTaxon = if data.taxonid then data.taxonid + "" else undefined
 		object.scientificName = data.scientific_name
 		object.mainCommonName = data.main_common_name
 		object.redList = true # TODO: set true, false. for unclear maybe add a new attribute.
