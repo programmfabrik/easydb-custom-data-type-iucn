@@ -86,7 +86,8 @@ class IUCNUpdate
 		)
 
 	__updateObjects: (data, schema) ->
-		apiSettings = data.server_config.iucn_api_settings # TODO: Check where to get the settings.
+		apiSettings = data.server_config.iucn_api_settings
+
 		# Some objects will contain the ID and it is necessary to make the search by id, otherwise they will contain the
 		# scientific name.
 		objectsByIdMap= {}
@@ -167,96 +168,101 @@ class IUCNUpdate
 		)
 
 	__updateTags: (objects, schema, data) ->
-		objecttypes = data.server_config.iucn_settings?.objecttypes
-		if not objecttypes
-			return CUI.resolvedPromise() # No objects will be updated. #TODO: Show error instead?
+		if objects.length == 0
+			return CUI.resolvedPromise()
 
-		iucnType = ez5.IUCNUtil.getFieldType()
+		iucnSettings = data.server_config.iucn_settings
+		if not iucnSettings
+			return CUI.resolvedPromise() # TODO: Error or skip?
 
-		tablesById = {}
-		for table in schema.tables
-			tablesById[table.table_id] = table
+		idTagRed = iucnSettings.tag_red
+		idTagUnclear = iucnSettings.tag_unclear
+		iucnFields = iucnSettings.iucn_fields
 
-		# data.server_config.iucn_settings.objecttypes (array)
-		# objecttype_direct is the id of the ot that contains a field of iucn custom data type
-		# objecttype_with_link is the id of the ot that contains objecttype_direct as linked object.
+		if not iucnFields or not idTagRed or not idTagUnclear
+			return CUI.resolvedPromise() # TODO: Error or skip?
 
-		for objecttype in data.server_config.iucn_settings.objecttypes
-			# Table with IUCN columns.
-			tableDirect = tablesById[objecttype.objecttype_direct]
-			# Table with links to tableDirect.
-			tableLink = tablesById[objecttype.objecttype_with_link]
+		easydbToken = data.state.easydbToken
+		if not easydbToken
+			return CUI.resolvedPromise() # TODO: this should not happen, but if the token is not in the state, what to do?
 
-			if not tableDirect?.columns # Table does not exist.
-				continue
-
-			# TODO: Perhaps instead of saving the columns, it would be nice to build the search request
-			# and keep a map with the references to the values to change then dinamically afterwards in the chunk work.
-			# Or just move everything to a method and re-use it with every value.
-			# Or build an structure prepared to generate the search easily.
-			columns = []
-			for column in tableDirect.columns
-				if not column.type == iucnType
-					continue
-
-				if column.kind == "link" and tablesById[column.other_table_id] # Nested field.
-					nestedTable = tablesById[column.other_table_id]
-#					nestedTable.columns # TODO: How many levels of nested?
-
-					# TODO: If nested does not contain a column, skip as well.
-					continue
-
-				columns.push(column)
-
-			if columns.length == 0 # No IUCN columns found.
-				continue
-
-			if not tableLink?.foreign_keys
-				continue
-
-			for foreignKey in tableLink.foreign_keys
-				if not tableLink.columns or foreignKey.referenced_table?.table_id != tableDirect.table_id
-					continue
-
-				column = tableLink.columns.find((column) -> column.column_id == foreignKey.columns[0].column_id)
-				if not column or column.type != "link"
-					continue
-
-				# Linked table found in the 'column'.
-				# column is the field where the linked object to the direct table is.
-				# TODO: add the search.
-				# I think it should be a second search, where it searches for results of the previous one.
-
+		fields = iucnFields.map((field) -> field.iucn_field_name + ".idTaxon")
+		objecttypes = fields.map((fieldFullName) -> fieldFullName.split(".")[0])
+		easydbUrl = @__getEasydbUrl(data)
 
 		return CUI.chunkWork.call(@,
 			items: objects
 			chunk_size: 1
 			call: (items) =>
-				#TODO: Implement the search and the update of tags.
+				deferred = new CUI.Deferred()
+
 				item = items[0]
+				xhr = new CUI.XHR
+					method: "POST"
+					url: easydbUrl + "/search"
+					headers:
+						'x-easydb-token' : easydbToken
+					body:
+						offset: 0,
+						limit: 1000, # TODO: Recursive to get all? something like search_no_limit
+						search: [
+							type: "in",
+							fields: fields,
+							in: [item.data.idTaxon],
+							bool: "must"
+						],
+						format: "long",
+						objecttypes: objecttypes
+				xhr.start().done((response) =>
+					if not response.objects or response.objects.length == 0
+						deferred.resolve()
+						return
 
-				# Example of item
-				#				"identifier": "1",
-				#				"data": {
-				#					"idTaxon": 12392,
-				#					"scientificName": "Loxodonta africana",
-				#					"mainCommonName": "African Elephant",
-				#					"redList": true,
-				#					"_fulltext": {
-				#						"text": "Loxodonta africana African Elephant",
-				#						"string": "12392"
-				#					},
-				#					"_standard": {
-				#						"text": "Loxodonta africana"
-				#					},
-				#					"__updateTags": true
-				#				}
+					objectsByObjecttype = {}
+					response.objects.forEach((object) =>
+						objecttype = object._objecttype
+						if not objectsByObjecttype[objecttype]
+							objectsByObjecttype[objecttype] = []
 
-				# It is necessary to search objects that contains objects with the same idTaxon in the fields specified in the config
-				# How to search when the field is a custom data type? Maybe use the standard and save the id in the _standard?
-				# (atm the standard contains the scientific name)
+						if not object._tags
+							object._tags = []
 
+						# TODO: Check the correct behaviour for red/unclear tag.
+						if item.data.redList
+							idTagToSet = idTagRed
+						else
+							idTagToSet = idTagUnclear
 
+						if object._tags.some((tag) -> tag._id == idTagToSet)
+							return # Tag is set, we skip the object.
+
+						object._tags.push(_id: idTagToSet)
+						object[objecttype]._version++
+						objectsByObjecttype[objecttype].push(object)
+					)
+
+					updatePromises = []
+					for objecttype, _objects of objectsByObjecttype
+						xhr = new CUI.XHR
+							method: "POST"
+							url: easydbUrl + "/db/#{objecttype}"
+							headers:
+								'x-easydb-token' : easydbToken
+							body: _objects
+						updatePromises.push(xhr.start())
+
+					CUI.whenAll(updatePromises).done( =>
+						deferred.resolve()
+					).fail(=>
+						# TODO: Skip or error?
+						deferred.resolve()
+					)
+				).fail((a)=>
+					# TODO: Skip or error?
+					deferred.resolve()
+				)
+
+				return deferred.promise()
 		)
 
 	main: (data) ->
