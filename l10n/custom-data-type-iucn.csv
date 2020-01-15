@@ -17,6 +17,7 @@ server.config.parameter.system.iucn_settings.tag_red.label,Red list tag,Red list
 server.config.parameter.system.iucn_settings.tag_unclear.label,Unclear tag,Unclear tag,,
 server.config.parameter.system.iucn_settings.tag.placeholder.tag_red,Select red list tag,Select red list tag,,
 server.config.parameter.system.iucn_settings.tag.placeholder.tag_unclear,Select unclear tag,Select unclear tag,,
-server.config.parameter.system.iucn_settings.objecttypes.label,Objecttypes,Objecttypes,,
+server.config.parameter.system.iucn_settings.iucn_fields.label,IUCN Fields,IUCN Fields,,
+server.config.parameter.system.iucn_settings.iucn_fields.placeholder,- Select IUCN field -,- Select IUCN field -,,
 server.config.parameter.system.iucn_settings.objecttypes.direct.label,Objecttype with usage of custom data type IUCN,Objecttype with usage of custom data type IUCN,,
 server.config.parameter.system.iucn_settings.objecttypes.link.label,Objecttype with usage of the previously selected objecttype,Objecttype with usage of the previously selected objecttype,,

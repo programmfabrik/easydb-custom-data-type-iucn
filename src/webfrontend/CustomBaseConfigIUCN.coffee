@@ -17,69 +17,65 @@ class ez5.CustomBaseConfigIUCN extends BaseConfigPlugin
 					type: CUI.Select
 					name: fieldName
 					options: options
-			when 'iucn_objecttype', 'iucn_objecttype_link'
+			when 'iucn_field_name'
+				options = @__searchInAllObjecttypes((field) ->
+					return field instanceof CustomDataTypeIUCN and field.getFatherField() not instanceof ReverseLinkedTable # For now fields within a reverse linked table are skipped.
+				)
+
 				field =
 					type: CUI.Select
 					name: fieldName
-					onDataChanged: (data, field) ->
-						if def.plugin_type == 'iucn_objecttype'
-							field.getForm().getFieldsByName("objecttype_with_link")[0].reload()
-					options: (field) =>
-						if def.plugin_type == 'iucn_objecttype'
-							@__getOptionsForObjecttypeDirect()
-						else
-							data = field.getForm().getData()
-							@__getOptionsForObjecttypeLink(data.objecttype_direct)
-
+					options: options
 		return field
 
-	__getOptionsForObjecttypeLink: (idObjecttype) ->
-		options = []
-		if not idObjecttype
-			return options
-
-		@__searchInAllObjecttypes((field) ->
-			if not field.FieldSchema?.other_table_id
-				return
-
-			# Only LinkedObject and ReverseLinkedTable fields.
-			if field not instanceof LinkedObject and field not instanceof ReverseLinkedTable
-				return
-
-			# Check whether the linked-object/reverse-linked links to the given idObjecttype.
-			return field.FieldSchema.other_table_id == idObjecttype
-		, options)
-		return options
-
-	__getOptionsForObjecttypeDirect: ->
-		if @__objecttypes
-			return @__objecttypes
-
-		@__objecttypes = []
-		@__searchInAllObjecttypes((field) ->
-			return field instanceof CustomDataTypeIUCN and
-				field.getFatherField() not instanceof ReverseLinkedTable # For now fields within a reverse linked table are skipped.
-		, @__objecttypes)
-		return @__objecttypes
-
 	# Search in all objecttypes using a 'filter' function.
-	# If filter returns true, it adds the objecttype to 'objecttypeOptions'.
-	__searchInAllObjecttypes: (filter, objecttypeOptions) ->
-		for _, objecttype of ez5.schema.CURRENT._objecttype_by_name
-			if objecttype.name.indexOf('@') > -1 # Skip connector objecttypes.
-				continue
+	# Applies the filter function to each field and adds it to an array of options.
+	__searchInAllObjecttypes: (filter) ->
+		optionsByObjecttype = {}
 
-			idTable = objecttype.table_id
+		getFields = (idTable, path = "") ->
 			mask = Mask.getMaskByMaskName("_all_fields", idTable)
+
+			if path
+				tableName = path.split(".")[0]
+			else
+				tableName = mask.table.name()
+
+			tableNameLocalized = mask.table.nameLocalized()
+			if not optionsByObjecttype[tableName]
+				optionsByObjecttype[tableName] = [label: tableNameLocalized]
+
 			mask.invokeOnFields("all", true, ((field) =>
+				if field instanceof LinkedObject and field not instanceof TreeColumn and field not instanceof ReverseLinkedTable
+					idLinkedTable = field.linkMask().table.id()
+					if idLinkedTable == idTable # This is a field with a linked object to the same objecttype.
+						return
+					getFields(field.linkMask().table.id(), field.fullName() + ".")
+					return
+
 				if not filter(field)
 					return
 
-				objecttypeOptions.push
-					text: objecttype._name_localized
-					value: idTable
-				return false
+				optionsByObjecttype[tableName].push
+					text: field.nameLocalized()
+					value: path + field.fullName()
+				return
 			))
+
+		for _, objecttype of ez5.schema.CURRENT._objecttype_by_name
+			if objecttype.name.indexOf('@') > -1 # Skip connector objecttypes.
+				continue
+			getFields(objecttype.table_id)
+
+		options = [
+			text: $$("server.config.parameter.system.iucn_settings.iucn_fields.placeholder")
+			value: null
+		]
+		for _, _options of optionsByObjecttype
+			if _options.length == 1
+				continue
+			options = options.concat(_options)
+		return options
 
 
 
