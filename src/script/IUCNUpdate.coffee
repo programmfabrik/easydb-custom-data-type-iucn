@@ -6,8 +6,6 @@ class IUCNUpdate
 		return "http://localhost/api/v1"
 
 	__startUpdate: (data) ->
-		# TODO: Do a validation for the token configured in the database.
-		# I found that the response of the API returns 200 - 'message': "Token not valid!" if it is wrong (not error)
 		@__login(data).done((response) =>
 			easydbToken = response.token
 			if not easydbToken
@@ -23,17 +21,17 @@ class IUCNUpdate
 				easydbToken: easydbToken
 				config: {}
 
-			# TODO: Maybe it is not necessary to save more stuff than the token in the state because it could be included
-			# in the update request.
+			# TODO: FOR NOW ONLY THE EASYDB TOKEN IN THE STATE IS USED. CHECK IF THE IUCN CONFIGURATION WILL BE AVAILABLE IN
+			# SYSTEM CONFIG IN THE UPDATE, OTHERWISE IT IS NECESSARY TO ADD IT TO THE STATE.
 			for settingsKey in ["iucn_settings", "iucn_easydb_settings", "iucn_api_settings"]
 				if not systemConfig[settingsKey]
 					ez5.respondError("custom.data.type.iucn.start-update.error.#{settingsKey}-empty")
 					return
-				state.config[settingsKey] = systemConfig[settingsKey]
+#				state.config[settingsKey] = systemConfig[settingsKey]
 
 			ez5.respondSuccess(state: state)
 		).fail((error) =>
-			ez5.respondError("custom.data.type.iucn.start-update.error.login", error: error.response?.data or error)
+			ez5.respondError("custom.data.type.iucn.start-update.error.login", error: error?.response?.data or error)
 		)
 		return
 
@@ -55,7 +53,7 @@ class IUCNUpdate
 		# Get session, to get a valid token.
 		xhr = new CUI.XHR
 			method: "GET"
-			url: "#{easydbUrl}/session" # TODO: Perhaps it is necessary to store some base config settings in the state of this response.
+			url: "#{easydbUrl}/session"
 		xhr.start().done((response) =>
 			# Authentication with login and password.
 			xhr = new CUI.XHR
@@ -67,6 +65,7 @@ class IUCNUpdate
 		).fail(deferred.reject)
 		return deferred.promise()
 
+	# TODO: Remove schema if not used.
 	__getSchema: (data) ->
 		{easydbToken} = data.state
 
@@ -79,6 +78,8 @@ class IUCNUpdate
 		return xhr.start()
 
 	__update: (data) ->
+		# TODO: CHECK IF THE IUCN TOKEN IS VALID BEFORE DOING ANYTHING.
+		# I found that the response of the API returns 200 - 'message': "Token not valid!" if it is wrong (not error)
 		@__getSchema(data).done((schema) =>
 			@__updateObjects(data, schema)
 		).fail((error) =>
@@ -120,10 +121,10 @@ class IUCNUpdate
 			call: (items) =>
 				scientificName = items[0]
 				ez5.IUCNUtil.searchBySpecies(scientificName, apiSettings).done((response) =>
-					objectFound = response.result?[0]
-					if not objectFound
+					objectsFound = response.result
+					if CUI.util.isEmpty(objectsFound)
 						return
-					foundData = ez5.IUCNUtil.setObjectData({}, objectFound)
+					foundData = ez5.IUCNUtil.setObjectData({}, objectsFound)
 					for object in objectsByNameMap[scientificName]
 						object.data = ez5.IUCNUtil.getSaveData(foundData)
 						# Object is updated now. Next time that the script is executed with this object
@@ -140,10 +141,10 @@ class IUCNUpdate
 			call: (items) =>
 				id = items[0]
 				ez5.IUCNUtil.searchBySpeciesId(id, apiSettings).done((response) =>
-					objectFound = response.result?[0]
-					if not objectFound
+					objectsFound = response.result
+					if CUI.util.isEmpty(objectsFound)
 						return
-					foundData = ez5.IUCNUtil.setObjectData({}, objectFound)
+					foundData = ez5.IUCNUtil.setObjectData({}, objectsFound)
 					for object in objectsByIdMap[id]
 						if ez5.IUCNUtil.isEqual(object.data, foundData)
 							# If the data did not change since the last time it was checked, and the __updateTags is true.
@@ -161,9 +162,8 @@ class IUCNUpdate
 		CUI.whenAll([chunkByName, chunkById]).done( =>
 			@__updateTags(objectsToUpdateTags, schema, data).done(=>
 				ez5.respondSuccess({payload: objectsToUpdate})
-			).fail((messageKey) =>
-				# TODO: When the update fails, update objects anyways? or error?
-				ez5.respondError(messageKey)
+			).fail((messageKey, opts = {}) =>
+				ez5.respondError(messageKey, opts)
 			)
 		)
 
@@ -173,20 +173,33 @@ class IUCNUpdate
 
 		iucnSettings = data.server_config.iucn_settings
 		if not iucnSettings
-			return CUI.resolvedPromise() # TODO: Error or skip?
+			return CUI.rejectedPromise("custom.data.type.iucn.update.error.not-available-settings")
 
 		idTagRed = iucnSettings.tag_red
 		idTagUnclear = iucnSettings.tag_unclear
 		iucnFields = iucnSettings.iucn_fields
 
 		if not iucnFields or not idTagRed or not idTagUnclear
-			return CUI.resolvedPromise() # TODO: Error or skip?
+			return CUI.rejectedPromise("custom.data.type.iucn.update.error.not-available-settings")
 
 		easydbToken = data.state.easydbToken
 		if not easydbToken
-			return CUI.resolvedPromise() # TODO: this should not happen, but if the token is not in the state, what to do?
+			return CUI.rejectedPromise("custom.data.type.iucn.update.error.not-easydb-token-in-state")
 
-		fields = iucnFields.map((field) -> field.iucn_field_name + ".idTaxon")
+		linkSeparator = ez5.IUCNUtil.LINK_FIELD_SEPARATOR
+
+		linkedFields = [] # TODO: Implement.
+		fields = []
+		iucnFields.forEach((field) ->
+			if field.iucn_field_name.indexOf(linkSeparator) != -1
+				fieldName = field.iucn_field_name
+				index = fieldName.indexOf(linkSeparator)
+				linkedFields.push
+					linked_field: fieldName.substring(0, index)
+					field: fieldName.substring(index + linkSeparator.length)
+			else
+				fields.push(field.iucn_field_name + ".idTaxon")
+		)
 		objecttypes = fields.map((fieldFullName) -> fieldFullName.split(".")[0])
 		easydbUrl = @__getEasydbUrl(data)
 
@@ -197,71 +210,107 @@ class IUCNUpdate
 				deferred = new CUI.Deferred()
 
 				item = items[0]
-				xhr = new CUI.XHR
-					method: "POST"
-					url: easydbUrl + "/search"
-					headers:
-						'x-easydb-token' : easydbToken
-					body:
-						offset: 0,
-						limit: 1000, # TODO: Recursive to get all? something like search_no_limit
-						search: [
-							type: "in",
-							fields: fields,
-							in: [item.data.idTaxon],
-							bool: "must"
-						],
-						format: "long",
-						objecttypes: objecttypes
-				xhr.start().done((response) =>
-					if not response.objects or response.objects.length == 0
-						deferred.resolve()
+
+				addTagBody =
+					_mask: "_all_fields"
+					_tags: []
+					_comment: "IUCN UPDATE - ADD TAG"
+					"_tags:group_mode": "tag_add"
+
+				removeTagBody =
+					_mask: "_all_fields"
+					_tags: []
+					_comment: "IUCN UPDATE - REMOVE TAG"
+					"_tags:group_mode": "tag_remove"
+
+				# TODO: Check the correct behaviour for red/unclear tag.
+				if item.data.redList
+					addTagBody._tags.push(_id: idTagRed)
+					removeTagBody._tags.push(_id: idTagUnclear)
+				else if item.data.unclear
+					addTagBody._tags.push(_id: idTagUnclear)
+					removeTagBody._tags.push(_id: idTagRed)
+				else
+					removeTagBody._tags.push(_id: idTagRed)
+					removeTagBody._tags.push(_id: idTagUnclear)
+					addTagBody = null
+
+				limit = 1000
+				search = (offset = 0) =>
+					xhrAddTag = new CUI.XHR
+						method: "POST"
+						url: easydbUrl + "/search"
+						headers:
+							'x-easydb-token' : easydbToken
+						body:
+							offset: offset,
+							limit: limit,
+							search: [
+								type: "in",
+								fields: fields,
+								in: [item.data.idTaxon],
+								bool: "must"
+							],
+							format: "long",
+							objecttypes: objecttypes
+					xhrAddTag.start().done((response) =>
+						if not response.objects or response.objects.length == 0
+							deferred.resolve()
+							return
+
+						idObjectsByObjecttype = {}
+						response.objects.forEach((object) =>
+							objecttype = object._objecttype
+							if not idObjectsByObjecttype[objecttype]
+								idObjectsByObjecttype[objecttype] = []
+							idObject = object[objecttype]._id
+							idObjectsByObjecttype[objecttype].push(idObject)
+						)
+
+						updatePromises = []
+						for objecttype, ids of idObjectsByObjecttype
+							removeTagBody._objecttype = objecttype
+							removeTagBody[objecttype] = _id: ids
+							body = [removeTagBody]
+
+							if addTagBody
+								addTagBody._objecttype = objecttype
+								addTagBody[objecttype] = _id: ids
+								body.push(addTagBody)
+
+							xhrUpdateTags = new CUI.XHR
+								method: "POST"
+								url: easydbUrl + "/db/#{objecttype}?base_fields_only=1&format=short"
+								headers:
+									'x-easydb-token' : easydbToken
+								body: body
+							updatePromises.push(xhrUpdateTags.start())
+
+						CUI.whenAll(updatePromises).done( =>
+							if response.count > response.offset + limit
+								offset += limit
+								return search(offset)
+							else
+								return deferred.resolve()
+						).fail((e) =>
+							deferred.reject("custom.data.type.iucn.update.error.update-tags",
+								idTaxon: item.data.idTaxon
+								fields: fields
+								easydbToken: easydbToken
+								error: e?.response?.data
+							)
+							return
+						)
+					).fail((e)=>
+						deferred.reject("custom.data.type.iucn.update.error.search-objects",
+							idTaxon: item.data.idTaxon
+							fields: fields
+							easydbToken: easydbToken
+							error: e?.response?.data
+						)
 						return
-
-					objectsByObjecttype = {}
-					response.objects.forEach((object) =>
-						objecttype = object._objecttype
-						if not objectsByObjecttype[objecttype]
-							objectsByObjecttype[objecttype] = []
-
-						if not object._tags
-							object._tags = []
-
-						# TODO: Check the correct behaviour for red/unclear tag.
-						if item.data.redList
-							idTagToSet = idTagRed
-						else
-							idTagToSet = idTagUnclear
-
-						if object._tags.some((tag) -> tag._id == idTagToSet)
-							return # Tag is set, we skip the object.
-
-						object._tags.push(_id: idTagToSet)
-						object[objecttype]._version++
-						objectsByObjecttype[objecttype].push(object)
 					)
-
-					updatePromises = []
-					for objecttype, _objects of objectsByObjecttype
-						xhr = new CUI.XHR
-							method: "POST"
-							url: easydbUrl + "/db/#{objecttype}"
-							headers:
-								'x-easydb-token' : easydbToken
-							body: _objects
-						updatePromises.push(xhr.start())
-
-					CUI.whenAll(updatePromises).done( =>
-						deferred.resolve()
-					).fail(=>
-						# TODO: Skip or error?
-						deferred.resolve()
-					)
-				).fail((a)=>
-					# TODO: Skip or error?
-					deferred.resolve()
-				)
-
+				search()
 				return deferred.promise()
 		)
 

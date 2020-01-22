@@ -74,7 +74,6 @@ class CustomDataTypeIUCN extends CustomDataType
 		value: value
 
 	renderEditorInput: (data) ->
-		# TODO: Show error label when API url is not set. ez5.IUCNUtil.getApiSettings() api_url api_token
 		data = @__initData(data)
 		div = CUI.dom.div()
 
@@ -85,7 +84,7 @@ class CustomDataTypeIUCN extends CustomDataType
 
 			if data.idTaxon
 				output = @__getOutput(data, true, =>
-					ez5.IUCNUtil.setObjectData(data, {}) # Empty data.
+					ez5.IUCNUtil.setObjectData(data) # Empty data.
 					toggleOutput()
 				)
 				CUI.dom.replace(div, output)
@@ -106,13 +105,13 @@ class CustomDataTypeIUCN extends CustomDataType
 			onClick: =>
 				searchButton.startSpinner()
 				ez5.IUCNUtil.searchBySpecies(data.searchName).done((response) ->
-					# TODO: What to do if it returns more than 1 result. It takes the first one for now.
-					_data = response.result[0]
-					if _data
+					# TODO: When API token not set or invalid, show something.
+					_data = response.result
+					if not CUI.util.isEmpty(_data)
 						delete data.__notFound
 						ez5.IUCNUtil.setObjectData(data, _data)
 					else
-						data.__notFound
+						data.__notFound = true
 					onSearch()
 				).always(-> searchButton.stopSpinner())
 
@@ -142,26 +141,28 @@ class CustomDataTypeIUCN extends CustomDataType
 
 	__getOutput: (data, isEditor = false, onDelete) ->
 		if data.redList
-			redListText = $$("custom.data.type.iucn.output.red-list.text")
+			statusText = $$("custom.data.type.iucn.output.status.red-list.text")
+		else if data.unclear
+			statusText = $$("custom.data.type.iucn.output.status.unclear.text")
 		else
-			redListText = $$("custom.data.type.iucn.output.red-list.text")
+			statusText = $$("custom.data.type.iucn.output.no-status.text")
 
 		list = new CUI.VerticalList(content: [
 			new CUI.Label(text: data.mainCommonName, appearance: "title", multiline: true)
 			new CUI.Label(text: "#{data.idTaxon} - #{data.scientificName}", appearance: "secondary")
-			new CUI.Label(text: redListText, appearance: "secondary")
+			new CUI.Label(text: statusText, appearance: "secondary")
 		])
 
 		if isEditor
 			menuButton = new LocaButton
-				loca_key: "custom.data.type.iucn.output.menu.button"
+				loca_key: "custom.data.type.iucn.editor.menu.button"
 				icon: "ellipsis_v"
 				icon_right: false
 				appearance: "flat"
 				menu:
 					items: [
 						new LocaButton
-							loca_key: "custom.data.type.iucn.output.menu.delete-button"
+							loca_key: "custom.data.type.iucn.editor.menu.delete-button"
 							onClick: =>
 								onDelete?()
 					]
@@ -190,7 +191,7 @@ class CustomDataTypeIUCN extends CustomDataType
 	renderDetailOutput: (data, _, opts) ->
 		data = @__initData(data)
 		if not data.idTaxon
-			return CUI.dom.div() # TODO: empty Label with 'not set' text.
+			return new CUI.EmptyLabel(text: $$("custom.data.type.iucn.output.empty-data"))
 		return @__getOutput(data)
 
 	getSaveData: (data, save_data) ->

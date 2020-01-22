@@ -9,9 +9,10 @@ class ez5.CustomBaseConfigIUCN extends BaseConfigPlugin
 				]
 
 				for tagGroup in ez5.tagForm.tagGroups
+					options.push(label: tagGroup.getDisplayName())
 					for tag in tagGroup.getTags()
 						options.push
-							text: tagGroup.getDisplayName() + ": " + tag.getDisplayName() # TODO: Separator in CUI.Select with label
+							text: tag.getDisplayName()
 							value: tag.getId()
 				field =
 					type: CUI.Select
@@ -50,7 +51,7 @@ class ez5.CustomBaseConfigIUCN extends BaseConfigPlugin
 					idLinkedTable = field.linkMask().table.id()
 					if idLinkedTable == idTable # This is a field with a linked object to the same objecttype.
 						return
-					getFields(field.linkMask().table.id(), field.fullName() + ".")
+					getFields(field.linkMask().table.id(), field.fullName() + ez5.IUCNUtil.LINK_FIELD_SEPARATOR)
 					return
 
 				if not filter(field)

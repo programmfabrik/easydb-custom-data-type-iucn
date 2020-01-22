@@ -2,6 +2,7 @@ class ez5.IUCNUtil
 
 	@ENDPOINT_SPECIES = "/species/"
 	@ENDPOINT_SPECIES_ID = "/species/id/"
+	@LINK_FIELD_SEPARATOR = ":__link:" # The link separator is used to separate iucn fields from their linked fields.
 
 	@getFieldType: ->
 		return "custom:base.custom-data-type-iucn.iucn"
@@ -25,10 +26,28 @@ class ez5.IUCNUtil
 		return xhr.start()
 
 	@setObjectData: (object, data) ->
-		object.idTaxon = if data.taxonid then data.taxonid + "" else undefined
+		if CUI.util.isEmpty(data) # When data is empty, clean the object.
+			delete object.idTaxon
+			delete object.scientificName
+			delete object.mainCommonName
+			delete object.redList
+			delete object.unclear
+			return
+
+		# TODO: Check this, by default both are not unclear or redlist.
+		object.unclear = false
+		object.redList = false
+		if CUI.util.isArray(data)
+			if data.length > 1 # When there is more than 1 result it means that the status is unclear.
+				object.unclear = true
+			data = data[0]
+
+		if not object.unclear
+			object.redList = true # TODO: How to know if it's red list.
+
+		object.idTaxon = "#{data.taxonid}"
 		object.scientificName = data.scientific_name
 		object.mainCommonName = data.main_common_name
-		object.redList = true # TODO: set true, false. for unclear maybe add a new attribute.
 		return object
 
 	@isEqual: (objectOne, objectTwo) ->
@@ -43,6 +62,7 @@ class ez5.IUCNUtil
 			scientificName: data.scientificName
 			mainCommonName: data.mainCommonName
 			redList: data.redList
+			unclear: data.unclear
 			_fulltext:
 				text: "#{data.scientificName} #{data.mainCommonName}"
 				string: "#{data.idTaxon}"
