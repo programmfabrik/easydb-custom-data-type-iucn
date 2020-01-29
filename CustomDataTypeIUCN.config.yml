@@ -45,26 +45,29 @@ base_config:
   - name: iucn_easydb_settings
     group: iucn
     parameters:
+      easydb_api_url:
+        type: text
+        position: 0
       easydb_login:
         type: text
-        position: 2
+        position: 1
       easydb_password:
         type: text
-        position: 3
+        position: 2
   - name: iucn_settings
     group: iucn
     parameters:
       tag_red:
         type: int
-        position: 4
+        position: 0
         plugin_type: "iucn_tag"
       tag_unclear:
         type: int
-        position: 5
+        position: 1
         plugin_type: "iucn_tag"
       iucn_fields:
         type: table
-        position: 6
+        position: 2
         fields:
           - name: iucn_field_name
             type: text

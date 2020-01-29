@@ -30,6 +30,7 @@ class ez5.IUCNUtil
 			delete object.idTaxon
 			delete object.scientificName
 			delete object.mainCommonName
+			delete object.category
 			delete object.redList
 			delete object.unclear
 			return
@@ -43,15 +44,16 @@ class ez5.IUCNUtil
 			data = data[0]
 
 		if not object.unclear
-			object.redList = true # TODO: How to know if it's red list.
+			object.redList = data.category in ["EX", "EW", "CR", "EN", "VU"]
 
 		object.idTaxon = "#{data.taxonid}"
 		object.scientificName = data.scientific_name
 		object.mainCommonName = data.main_common_name
+		object.category = data.category
 		return object
 
 	@isEqual: (objectOne, objectTwo) ->
-		for key in ["idTaxon", "scientificName", "mainCommonName", "redList"]
+		for key in ["idTaxon", "scientificName", "mainCommonName", "category", "redList", "unclear"]
 			if not CUI.util.isEqual(objectOne[key], objectTwo[key])
 				return false
 		return true
@@ -61,6 +63,7 @@ class ez5.IUCNUtil
 			idTaxon: data.idTaxon
 			scientificName: data.scientificName
 			mainCommonName: data.mainCommonName
+			category: data.category
 			redList: data.redList
 			unclear: data.unclear
 			_fulltext:
