@@ -1,9 +1,11 @@
 class IUCNUpdate
 
 	# Returns the base easydb URL.
-	__getEasydbUrl: (data) ->
-		# TODO: Check where the url of easydb is provided. Probably in data.server_config?
-		return "http://localhost/api/v1"
+	__getEasydbUrl: (easydb_api_url) ->
+		# TODO: For now this is how the easydb url api is obtained.
+		if not easydb_api_url.endsWith("/api/v1")
+			easydb_api_url += "/api/v1"
+		return easydb_api_url
 
 	__startUpdate: (data) ->
 		@__login(data).done((response) =>
@@ -12,22 +14,20 @@ class IUCNUpdate
 				ez5.respondError("custom.data.type.iucn.start-update.error.easydb-token-empty")
 				return
 
-			systemConfig = response?.config?.base?.system
-			if not systemConfig
-				ez5.respondError("custom.data.type.iucn.start-update.error.system-config-empty")
+			config = @__getConfig(data)
+			if not config
+				ez5.respondError("custom.data.type.iucn.start-update.error.server-config-empty")
 				return
 
 			state =
 				easydbToken: easydbToken
 				config: {}
 
-			# TODO: FOR NOW ONLY THE EASYDB TOKEN IN THE STATE IS USED. CHECK IF THE IUCN CONFIGURATION WILL BE AVAILABLE IN
-			# SYSTEM CONFIG IN THE UPDATE, OTHERWISE IT IS NECESSARY TO ADD IT TO THE STATE.
 			for settingsKey in ["iucn_settings", "iucn_easydb_settings", "iucn_api_settings"]
-				if not systemConfig[settingsKey]
-					ez5.respondError("custom.data.type.iucn.start-update.error.#{settingsKey}-empty")
+				if not config[settingsKey]
+					ez5.respondError("custom.data.type.iucn.start-update.error.#{settingsKey}-not-available-in-server-config")
 					return
-#				state.config[settingsKey] = systemConfig[settingsKey]
+				state.config[settingsKey] = config[settingsKey] # Save necessary config in the state.
 
 			ez5.respondSuccess(state: state)
 		).fail((error) =>
@@ -35,11 +35,18 @@ class IUCNUpdate
 		)
 		return
 
+	# TODO: Check structure of the server_config and return the correct object where all settings are.
+	__getConfig: (data) ->
+		return data.server_config
+
 	__login: (data) ->
-		# TODO: Check the correct path for settings.
-		serverConfig = data.server_config
-		login = serverConfig.iucn_easydb_settings?.easydb_login
-		password = serverConfig.iucn_easydb_settings?.easydb_password
+		config = @__getConfig(data)
+		if not config
+			ez5.respondError("custom.data.type.iucn.start-update.error.server-config-empty")
+			return
+		login = config.iucn_easydb_settings?.easydb_login
+		password = config.iucn_easydb_settings?.easydb_password
+		easydbApiUrl = config.iucn_easydb_settings?.easydb_api_url
 
 		if not login or not password
 			ez5.respondError("custom.data.type.iucn.start-update.error.login-password-not-provided",
@@ -47,9 +54,13 @@ class IUCNUpdate
 				password: password
 			)
 			return
+
+		if not easydbApiUrl
+			ez5.respondError("custom.data.type.iucn.start-update.error.easydb-api-url-not-provided")
+			return
 		deferred = new CUI.Deferred()
 
-		easydbUrl = @__getEasydbUrl(data)
+		easydbUrl = @__getEasydbUrl(easydbApiUrl)
 		# Get session, to get a valid token.
 		xhr = new CUI.XHR
 			method: "GET"
@@ -65,29 +76,15 @@ class IUCNUpdate
 		).fail(deferred.reject)
 		return deferred.promise()
 
-	# TODO: Remove schema if not used.
-	__getSchema: (data) ->
-		{easydbToken} = data.state
-
-		url = @__getEasydbUrl(data) + "/schema/user/CURRENT?format=json"
-		xhr = new CUI.XHR
-			method: "GET"
-			url: url
-			headers:
-				'x-easydb-token' : easydbToken
-		return xhr.start()
-
 	__update: (data) ->
-		# TODO: CHECK IF THE IUCN TOKEN IS VALID BEFORE DOING ANYTHING.
-		# I found that the response of the API returns 200 - 'message': "Token not valid!" if it is wrong (not error)
-		@__getSchema(data).done((schema) =>
-			@__updateObjects(data, schema)
-		).fail((error) =>
-			ez5.respondError("custom.data.type.iucn.start-update.error.get-schema", error: error.response?.data or error)
-		)
-
-	__updateObjects: (data, schema) ->
-		apiSettings = data.server_config.iucn_api_settings
+		apiSettings = data.state.config?.iucn_api_settings
+		if not apiSettings
+			ez5.respondError("custom.data.type.iucn.update.error.iucn_api_settings.not-available-in-state", state: data.state)
+			return
+		easydbApiUrl = data.state.config?.iucn_easydb_settings?.easydb_api_url
+		if not easydbApiUrl
+			ez5.respondError("custom.data.type.iucn.update.error.easydb_api_url.not-available-in-state", state: data.state)
+			return
 
 		# Some objects will contain the ID and it is necessary to make the search by id, otherwise they will contain the
 		# scientific name.
@@ -115,15 +112,24 @@ class IUCNUpdate
 		objectsToUpdate = []
 		objectsToUpdateTags = []
 
+		# The response of the API returns 200 - 'message': "Token not valid!" when the token is not valid.
+		# For now we will be using this to check it.
 		chunkByName = CUI.chunkWork.call(@,
 			items: Object.keys(objectsByNameMap)
 			chunk_size: 1
 			call: (items) =>
 				scientificName = items[0]
+				deferred = new CUI.Deferred()
 				ez5.IUCNUtil.searchBySpecies(scientificName, apiSettings).done((response) =>
+					if response.message == "Token not valid!"
+						deferred.reject("custom.data.type.iucn.update.error.iucn-api-token-not-valid",
+							iucn_api_settings: apiSettings
+							response: response
+						)
+						return
 					objectsFound = response.result
 					if CUI.util.isEmpty(objectsFound)
-						return
+						return deferred.resolve()
 					foundData = ez5.IUCNUtil.setObjectData({}, objectsFound)
 					for object in objectsByNameMap[scientificName]
 						object.data = ez5.IUCNUtil.getSaveData(foundData)
@@ -131,8 +137,9 @@ class IUCNUpdate
 						# the tags of the top level object will be updated.
 						object.data.__updateTags = true
 						objectsToUpdate.push(object)
-					return
-				)
+					return deferred.resolve()
+				).fail(deferred.reject)
+				return deferred.promise()
 		)
 
 		chunkById = CUI.chunkWork.call(@,
@@ -140,10 +147,17 @@ class IUCNUpdate
 			chunk_size: 1
 			call: (items) =>
 				id = items[0]
+				deferred = new CUI.Deferred()
 				ez5.IUCNUtil.searchBySpeciesId(id, apiSettings).done((response) =>
+					if response.message == "Token not valid!"
+						deferred.reject("custom.data.type.iucn.update.error.iucn-api-token-not-valid",
+							iucn_api_settings: apiSettings
+							response: response
+						)
+						return
 					objectsFound = response.result
 					if CUI.util.isEmpty(objectsFound)
-						return
+						return deferred.resolve()
 					foundData = ez5.IUCNUtil.setObjectData({}, objectsFound)
 					for object in objectsByIdMap[id]
 						if ez5.IUCNUtil.isEqual(object.data, foundData)
@@ -155,25 +169,37 @@ class IUCNUpdate
 							object.data = ez5.IUCNUtil.getSaveData(foundData)
 							object.data.__updateTags = true
 							objectsToUpdate.push(object)
-					return
-				)
+					return deferred.resolve()
+				).fail(deferred.reject)
+				return deferred.promise()
 		)
 
-		CUI.whenAll([chunkByName, chunkById]).done( =>
-			@__updateTags(objectsToUpdateTags, schema, data).done(=>
-				ez5.respondSuccess({payload: objectsToUpdate})
+		return CUI.when([chunkByName, chunkById]).done( =>
+			@__updateTags(objectsToUpdateTags, data).done(=>
+				response = payload: objectsToUpdate
+				if data.batch_info and data.batch_info.offset + data.objects.length >= data.batch_info.total
+					easydbUrl = @__getEasydbUrl(easydbApiUrl)
+					xhr = new CUI.XHR
+						method: "POST"
+						url: "#{easydbUrl}/session/deauthenticate"
+					xhr.start().always(=>
+						ez5.respondSuccess(response)
+					)
+				else
+					ez5.respondSuccess(response)
 			).fail((messageKey, opts = {}) =>
 				ez5.respondError(messageKey, opts)
 			)
+		).fail((messageKey, opts = {}) =>
+			ez5.respondError(messageKey, opts)
 		)
 
-	__updateTags: (objects, schema, data) ->
+	__updateTags: (objects, data) ->
 		if objects.length == 0
 			return CUI.resolvedPromise()
 
-		iucnSettings = data.server_config.iucn_settings
-		if not iucnSettings
-			return CUI.rejectedPromise("custom.data.type.iucn.update.error.not-available-settings")
+		easydbUrl = @__getEasydbUrl(data.state.config.iucn_easydb_settings.easydb_api_url)
+		iucnSettings = data.state.config.iucn_settings
 
 		idTagRed = iucnSettings.tag_red
 		idTagUnclear = iucnSettings.tag_unclear
@@ -188,7 +214,7 @@ class IUCNUpdate
 
 		linkSeparator = ez5.IUCNUtil.LINK_FIELD_SEPARATOR
 
-		linkedFields = [] # TODO: Implement.
+		linkedFields = []
 		fields = []
 		iucnFields.forEach((field) ->
 			if field.iucn_field_name.indexOf(linkSeparator) != -1
@@ -196,70 +222,60 @@ class IUCNUpdate
 				index = fieldName.indexOf(linkSeparator)
 				linkedFields.push
 					linked_field: fieldName.substring(0, index)
-					field: fieldName.substring(index + linkSeparator.length)
+					field: fieldName.substring(index + linkSeparator.length) + ".idTaxon"
 			else
 				fields.push(field.iucn_field_name + ".idTaxon")
 		)
-		objecttypes = fields.map((fieldFullName) -> fieldFullName.split(".")[0])
-		easydbUrl = @__getEasydbUrl(data)
 
+		searchLimit = 1000
 		return CUI.chunkWork.call(@,
 			items: objects
 			chunk_size: 1
 			call: (items) =>
-				deferred = new CUI.Deferred()
-
 				item = items[0]
 
-				addTagBody =
-					_mask: "_all_fields"
-					_tags: []
-					_comment: "IUCN UPDATE - ADD TAG"
-					"_tags:group_mode": "tag_add"
+				# Search all objects which contain the idTaxon of the item and update the tags with the values of the item.
+				updateTags = (_fields, linked = false) ->
+					if _fields.length == 0
+						return CUI.resolvedPromise()
 
-				removeTagBody =
-					_mask: "_all_fields"
-					_tags: []
-					_comment: "IUCN UPDATE - REMOVE TAG"
-					"_tags:group_mode": "tag_remove"
+					if linked
+						_linkedFields = _fields.map((_field) -> _field.linked_field + "._global_object_id")
+						_fields = _fields.map((_field) -> _field.field)
 
-				# TODO: Check the correct behaviour for red/unclear tag.
-				if item.data.redList
-					addTagBody._tags.push(_id: idTagRed)
-					removeTagBody._tags.push(_id: idTagUnclear)
-				else if item.data.unclear
-					addTagBody._tags.push(_id: idTagUnclear)
-					removeTagBody._tags.push(_id: idTagRed)
-				else
-					removeTagBody._tags.push(_id: idTagRed)
-					removeTagBody._tags.push(_id: idTagUnclear)
-					addTagBody = null
+					# Prepare tags body
+					deferred = new CUI.Deferred()
+					addTagBody =
+						_mask: "_all_fields"
+						_tags: []
+						_comment: "IUCN UPDATE - ADD TAG"
+						"_tags:group_mode": "tag_add"
 
-				limit = 1000
-				search = (offset = 0) =>
-					xhrAddTag = new CUI.XHR
-						method: "POST"
-						url: easydbUrl + "/search"
-						headers:
-							'x-easydb-token' : easydbToken
-						body:
-							offset: offset,
-							limit: limit,
-							search: [
-								type: "in",
-								fields: fields,
-								in: [item.data.idTaxon],
-								bool: "must"
-							],
-							format: "long",
-							objecttypes: objecttypes
-					xhrAddTag.start().done((response) =>
-						if not response.objects or response.objects.length == 0
-							deferred.resolve()
-							return
+					removeTagBody =
+						_mask: "_all_fields"
+						_tags: []
+						_comment: "IUCN UPDATE - REMOVE TAG"
+						"_tags:group_mode": "tag_remove"
 
+					if item.data.redList
+						addTagBody._tags.push(_id: idTagRed)
+						removeTagBody._tags.push(_id: idTagUnclear)
+					else if item.data.unclear
+						addTagBody._tags.push(_id: idTagUnclear)
+						removeTagBody._tags.push(_id: idTagRed)
+					else
+						removeTagBody._tags.push(_id: idTagRed)
+						removeTagBody._tags.push(_id: idTagUnclear)
+						addTagBody = null
+					#
+
+					# Update tags of objects.
+					# When the item is in the red list, it adds the red list tag and removes unclear tag.
+					# When the item is unclear, it adds the unclear tag and removes red list tag.
+					# Otherwise, it removes all tags.
+					update = (objects) ->
 						idObjectsByObjecttype = {}
-						response.objects.forEach((object) =>
+						objects.forEach((object) =>
 							objecttype = object._objecttype
 							if not idObjectsByObjecttype[objecttype]
 								idObjectsByObjecttype[objecttype] = []
@@ -269,49 +285,132 @@ class IUCNUpdate
 
 						updatePromises = []
 						for objecttype, ids of idObjectsByObjecttype
-							removeTagBody._objecttype = objecttype
-							removeTagBody[objecttype] = _id: ids
-							body = [removeTagBody]
+							_removeTagBody = CUI.util.copyObject(removeTagBody, true)
+							_addTagBody = CUI.util.copyObject(addTagBody, true)
 
-							if addTagBody
-								addTagBody._objecttype = objecttype
-								addTagBody[objecttype] = _id: ids
-								body.push(addTagBody)
+							_removeTagBody._objecttype = objecttype
+							_removeTagBody[objecttype] = _id: ids
+							body = [_removeTagBody]
 
-							xhrUpdateTags = new CUI.XHR
+							if _addTagBody
+								_addTagBody._objecttype = objecttype
+								_addTagBody[objecttype] = _id: ids
+								body.push(_addTagBody)
+
+							updateTagsOpts =
 								method: "POST"
 								url: easydbUrl + "/db/#{objecttype}?base_fields_only=1&format=short"
 								headers:
-									'x-easydb-token' : easydbToken
+									'x-easydb-token': easydbToken
 								body: body
-							updatePromises.push(xhrUpdateTags.start())
+							xhrUpdateTags = new CUI.XHR(updateTagsOpts)
+							updateTagsPromise = xhrUpdateTags.start().fail((e) =>
+								deferred.reject("custom.data.type.iucn.update.error.update-tags",
+									request: updateTagsOpts
+									error: e?.response?.data
+								)
+							)
+							updatePromises.push(updateTagsPromise)
+						return CUI.when(updatePromises)
 
-						CUI.whenAll(updatePromises).done( =>
-							if response.count > response.offset + limit
-								offset += limit
-								return search(offset)
+					# Search for objects that contain an object which contain an idTaxon.
+					searchLinked = (objects) =>
+						searchLinkedDeferred = new CUI.Deferred()
+						_search = (offset = 0) =>
+							# When it is a linked search, the objects of the previous search are not updated but used to search
+							# linked objects to those objects.
+							objecttypes = _linkedFields.map((fullname) -> fullname.split(".")[0])
+							idObjects = objects.map((object) -> object._global_object_id)
+							searchOpts =
+								method: "POST"
+								url: easydbUrl + "/search"
+								headers:
+									'x-easydb-token' : easydbToken
+								body:
+									offset: offset,
+									limit: searchLimit,
+									search: [
+										type: "in",
+										fields: _linkedFields,
+										in: idObjects,
+										bool: "must"
+									],
+									format: "short",
+									objecttypes: objecttypes
+							xhrLinkSearch = new CUI.XHR(searchOpts)
+							xhrLinkSearch.start().done((response) =>
+								if not response.objects or response.objects.length == 0
+									searchLinkedDeferred.resolve()
+									return
+								update(response.objects).done(=>
+									if response.count > response.offset + searchLimit
+										offset += searchLimit
+										return _search(offset)
+									else
+										return searchLinkedDeferred.resolve()
+								)
+								return
+							).fail((e)=>
+								deferred.reject("custom.data.type.iucn.update.error.search-linked-objects",
+									request: searchOpts
+									error: e?.response?.data
+								)
+								return
+							)
+						_search()
+						return searchLinkedDeferred.promise()
+
+					# Search for objects containing idTaxon.
+					search = (offset = 0) =>
+						objecttypes = _fields.map((fullname) -> fullname.split(".")[0])
+						searchOpts =
+							method: "POST"
+							url: easydbUrl + "/search"
+							headers:
+								'x-easydb-token' : easydbToken
+							body:
+								offset: offset,
+								limit: searchLimit,
+								search: [
+									type: "in",
+									fields: _fields,
+									in: [item.data.idTaxon],
+									bool: "must"
+								],
+								format: "short",
+								objecttypes: objecttypes
+						xhrSearch = new CUI.XHR(searchOpts)
+						xhrSearch.start().done((response) =>
+							if not response.objects or response.objects.length == 0
+								deferred.resolve()
+								return
+							objects = response.objects
+
+							if linked
+								promise = searchLinked(objects)
 							else
-								return deferred.resolve()
-						).fail((e) =>
-							deferred.reject("custom.data.type.iucn.update.error.update-tags",
-								idTaxon: item.data.idTaxon
-								fields: fields
-								easydbToken: easydbToken
+								promise = update(objects)
+
+							promise.done(=>
+								if response.count > response.offset + searchLimit
+									offset += searchLimit
+									return search(offset)
+								else
+									return deferred.resolve()
+							)
+							return
+						).fail((e)=>
+							deferred.reject("custom.data.type.iucn.update.error.search-objects",
+								request: searchOpts
 								error: e?.response?.data
 							)
 							return
 						)
-					).fail((e)=>
-						deferred.reject("custom.data.type.iucn.update.error.search-objects",
-							idTaxon: item.data.idTaxon
-							fields: fields
-							easydbToken: easydbToken
-							error: e?.response?.data
-						)
-						return
-					)
-				search()
-				return deferred.promise()
+					search()
+					return deferred.promise()
+
+				# Update tags is called twice, one for normal fields and one for linked objects.
+				return CUI.when(updateTags(fields), updateTags(linkedFields, true))
 		)
 
 	main: (data) ->
@@ -319,7 +418,7 @@ class IUCNUpdate
 			ez5.respondError("custom.data.type.iucn.update.error.payload-missing")
 			return
 
-		for key in ["action", "plugin_config", "server_config"]
+		for key in ["action", "plugin_config"]
 			if (not data[key])
 				ez5.respondError("custom.data.type.iucn.update.error.payload-key-missing", {key: key})
 				return
