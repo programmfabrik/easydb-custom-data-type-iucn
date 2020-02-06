@@ -24,6 +24,7 @@ custom_types:
       timeout: 10
       batch_size: 1000
       interval_base_config: update_interval_iucn.days
+      easydb_api_url: http://127.0.0.1/api/v1
     mapping:
       idTaxon:
         type: text_oneline
@@ -45,15 +46,12 @@ base_config:
   - name: iucn_easydb_settings
     group: iucn
     parameters:
-      easydb_api_url:
-        type: text
-        position: 0
       easydb_login:
         type: text
-        position: 1
+        position: 0
       easydb_password:
         type: text
-        position: 2
+        position: 1
   - name: iucn_settings
     group: iucn
     parameters:

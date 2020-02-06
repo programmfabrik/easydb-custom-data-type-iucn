@@ -2,7 +2,6 @@ class IUCNUpdate
 
 	# Returns the base easydb URL.
 	__getEasydbUrl: (easydb_api_url) ->
-		# TODO: For now this is how the easydb url api is obtained.
 		if not easydb_api_url.endsWith("/api/v1")
 			easydb_api_url += "/api/v1"
 		return easydb_api_url
@@ -30,50 +29,60 @@ class IUCNUpdate
 				state.config[settingsKey] = config[settingsKey] # Save necessary config in the state.
 
 			ez5.respondSuccess(state: state)
-		).fail((error) =>
-			ez5.respondError("custom.data.type.iucn.start-update.error.login", error: error?.response?.data or error)
+		).fail((messageKey, opts) =>
+			ez5.respondError(messageKey, opts)
 		)
 		return
 
-	# TODO: Check structure of the server_config and return the correct object where all settings are.
 	__getConfig: (data) ->
-		return data.server_config
+		return data.server_config?.base?.system
 
 	__login: (data) ->
 		config = @__getConfig(data)
 		if not config
-			ez5.respondError("custom.data.type.iucn.start-update.error.server-config-empty")
-			return
+			return CUI.rejectedPromise("custom.data.type.iucn.start-update.error.server-config-empty")
+
 		login = config.iucn_easydb_settings?.easydb_login
 		password = config.iucn_easydb_settings?.easydb_password
-		easydbApiUrl = config.iucn_easydb_settings?.easydb_api_url
 
 		if not login or not password
-			ez5.respondError("custom.data.type.iucn.start-update.error.login-password-not-provided",
+			return CUI.rejectedPromise("custom.data.type.iucn.start-update.error.login-password-not-provided",
 				login: login
 				password: password
 			)
-			return
 
+		easydbApiUrl = data.plugin_config.update?.easydb_api_url
 		if not easydbApiUrl
-			ez5.respondError("custom.data.type.iucn.start-update.error.easydb-api-url-not-provided")
-			return
+			return CUI.rejectedPromise("custom.data.type.iucn.start-update.error.easydb-api-url-not-configured")
+
 		deferred = new CUI.Deferred()
 
 		easydbUrl = @__getEasydbUrl(easydbApiUrl)
 		# Get session, to get a valid token.
+		getSessionUrl = "#{easydbUrl}/session"
 		xhr = new CUI.XHR
 			method: "GET"
-			url: "#{easydbUrl}/session"
+			url: getSessionUrl
 		xhr.start().done((response) =>
 			# Authentication with login and password.
+			authenticateUrl = "#{easydbUrl}/session/authenticate?login=#{login}&password=#{password}"
 			xhr = new CUI.XHR
 				method: "POST"
-				url: "#{easydbUrl}/session/authenticate?login=#{login}&password=#{password}"
+				url: authenticateUrl
 				headers:
 					'x-easydb-token' : response.token
-			xhr.start().done(deferred.resolve).fail(deferred.reject)
-		).fail(deferred.reject)
+			xhr.start().done(deferred.resolve).fail((e) ->
+				deferred.reject("custom.data.type.iucn.start-update.error.authenticate-server-error",
+					e: e?.response?.data
+					url: authenticateUrl
+				)
+			)
+		).fail((e) ->
+			deferred.reject("custom.data.type.iucn.start-update.error.get-session-server-error",
+				e: e?.response?.data
+				url: getSessionUrl
+			)
+		)
 		return deferred.promise()
 
 	__update: (data) ->
@@ -81,9 +90,9 @@ class IUCNUpdate
 		if not apiSettings
 			ez5.respondError("custom.data.type.iucn.update.error.iucn_api_settings.not-available-in-state", state: data.state)
 			return
-		easydbApiUrl = data.state.config?.iucn_easydb_settings?.easydb_api_url
+		easydbApiUrl = data.plugin_config.update?.easydb_api_url
 		if not easydbApiUrl
-			ez5.respondError("custom.data.type.iucn.update.error.easydb_api_url.not-available-in-state", state: data.state)
+			ez5.respondError("custom.data.type.iucn.update.error.easydb-api-url-not-configured")
 			return
 
 		# Some objects will contain the ID and it is necessary to make the search by id, otherwise they will contain the
@@ -198,7 +207,7 @@ class IUCNUpdate
 		if objects.length == 0
 			return CUI.resolvedPromise()
 
-		easydbUrl = @__getEasydbUrl(data.state.config.iucn_easydb_settings.easydb_api_url)
+		easydbUrl = @__getEasydbUrl(data.plugin_config.update.easydb_api_url)
 		iucnSettings = data.state.config.iucn_settings
 
 		idTagRed = iucnSettings.tag_red
