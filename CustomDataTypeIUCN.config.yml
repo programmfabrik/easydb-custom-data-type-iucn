@@ -36,6 +36,7 @@ custom_types:
 base_config:
   - name: iucn_api_settings
     group: iucn
+    require_system_right: system.root
     parameters:
       api_url:
         type: text
@@ -45,6 +46,7 @@ base_config:
         position: 1
   - name: iucn_easydb_settings
     group: iucn
+    require_system_right: system.root
     parameters:
       easydb_login:
         type: text
