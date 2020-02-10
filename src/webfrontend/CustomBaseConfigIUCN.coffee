@@ -47,10 +47,14 @@ class ez5.CustomBaseConfigIUCN extends BaseConfigPlugin
 				optionsByObjecttype[tableName] = [label: tableNameLocalized]
 
 			mask.invokeOnFields("all", true, ((field) =>
-				if field instanceof LinkedObject and field not instanceof TreeColumn and field not instanceof ReverseLinkedTable
+				if field instanceof LinkedObject
 					idLinkedTable = field.linkMask().table.id()
 					if idLinkedTable == idTable # This is a field with a linked object to the same objecttype.
 						return
+
+					if field.insideNested() # Skip linked objects inside nested.
+						return
+
 					getFields(field.linkMask().table.id(), field.fullName() + ez5.IUCNUtil.LINK_FIELD_SEPARATOR)
 					return
 
