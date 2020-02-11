@@ -201,6 +201,14 @@ class CustomDataTypeIUCN extends CustomDataType
 
 		return save_data[@name()] = ez5.IUCNUtil.getSaveData(data)
 
+	isEmpty: (data, _, opts = {}) ->
+		data = data[@name()]
+
+		if opts.mode == "expert"
+			return CUI.util.isEmpty(data?.trim())
+
+		return CUI.util.isEmpty(data?.idTaxon)
+
 	__initData: (data) ->
 		if not data[@name()]
 			initData = {}
