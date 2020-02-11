@@ -36,7 +36,6 @@ custom_types:
 base_config:
   - name: iucn_api_settings
     group: iucn
-    require_system_right: system.root
     parameters:
       api_url:
         type: text
