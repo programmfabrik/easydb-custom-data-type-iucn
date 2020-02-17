@@ -34,7 +34,7 @@ custom_types:
         type: text
 
 base_config:
-  - name: iucn_updater
+  - name: update_interval_iucn
     group: update_custom_data_type
     parameters:
       days:
