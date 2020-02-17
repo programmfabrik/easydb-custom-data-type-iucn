@@ -34,6 +34,14 @@ custom_types:
         type: text
 
 base_config:
+  - name: iucn_updater
+    group: update_custom_data_type
+    parameters:
+      days:
+        type: int
+        min: 0
+        default: 1
+        position: 0
   - name: iucn_api_settings
     group: iucn
     parameters:
