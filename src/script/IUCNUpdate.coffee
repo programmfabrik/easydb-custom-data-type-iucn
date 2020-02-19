@@ -7,8 +7,7 @@ class IUCNUpdate
 		return easydb_api_url
 
 	__startUpdate: (data) ->
-		@__login(data).done((response) =>
-			easydbToken = response.token
+		@__login(data).done((easydbToken, easydbUrl) =>
 			if not easydbToken
 				ez5.respondError("custom.data.type.iucn.start-update.error.easydb-token-empty")
 				return
@@ -20,6 +19,7 @@ class IUCNUpdate
 
 			state =
 				easydbToken: easydbToken
+				easydbUrl: easydbUrl
 				config: {}
 
 			for settingsKey in ["iucn_settings", "iucn_easydb_settings", "iucn_api_settings"]
@@ -51,7 +51,7 @@ class IUCNUpdate
 				password: password
 			)
 
-		easydbApiUrl = data.plugin_config.update?.easydb_api_url
+		easydbApiUrl = data.server_config.system?.server?.internal_url
 		if not easydbApiUrl
 			return CUI.rejectedPromise("custom.data.type.iucn.start-update.error.easydb-api-url-not-configured")
 
@@ -71,7 +71,9 @@ class IUCNUpdate
 				url: authenticateUrl
 				headers:
 					'x-easydb-token' : response.token
-			xhr.start().done(deferred.resolve).fail((e) ->
+			xhr.start().done((response) ->
+				deferred.resolve(response?.token, easydbUrl)
+			).fail((e) ->
 				deferred.reject("custom.data.type.iucn.start-update.error.authenticate-server-error",
 					e: e?.response?.data
 					url: authenticateUrl
@@ -90,10 +92,13 @@ class IUCNUpdate
 		if not apiSettings
 			ez5.respondError("custom.data.type.iucn.update.error.iucn_api_settings.not-available-in-state", state: data.state)
 			return
-		easydbApiUrl = data.plugin_config.update?.easydb_api_url
+		easydbApiUrl = data.state.easydbUrl
 		if not easydbApiUrl
 			ez5.respondError("custom.data.type.iucn.update.error.easydb-api-url-not-configured")
 			return
+
+		if not data.state.easydbToken
+			return CUI.rejectedPromise("custom.data.type.iucn.update.error.not-easydb-token-in-state")
 
 		# Some objects will contain the ID and it is necessary to make the search by id, otherwise they will contain the
 		# scientific name.
@@ -218,8 +223,6 @@ class IUCNUpdate
 			return CUI.rejectedPromise("custom.data.type.iucn.update.error.not-available-settings")
 
 		easydbToken = data.state.easydbToken
-		if not easydbToken
-			return CUI.rejectedPromise("custom.data.type.iucn.update.error.not-easydb-token-in-state")
 
 		linkSeparator = ez5.IUCNUtil.LINK_FIELD_SEPARATOR
 
