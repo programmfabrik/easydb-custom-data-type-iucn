@@ -55,15 +55,26 @@ class ez5.CustomBaseConfigIUCN extends BaseConfigPlugin
 					if field.insideNested() # Skip linked objects inside nested.
 						return
 
+					if field.table.id() == field.linkMask().table.id()
+						return
+
 					getFields(field.linkMask().table.id(), field.fullName() + ez5.IUCNUtil.LINK_FIELD_SEPARATOR)
+					return
+
+				if field instanceof ReverseLinkedTable
 					return
 
 				if not filter(field)
 					return
 
+				value = path + field.fullName()
+				# Do not add duplicated fields (when 'edit' in linked object is enabled.)
+				if optionsByObjecttype[tableName].some((option) -> option.value == value)
+					return
+
 				optionsByObjecttype[tableName].push
 					text: field.nameLocalized()
-					value: path + field.fullName()
+					value: value
 				return
 			))
 
