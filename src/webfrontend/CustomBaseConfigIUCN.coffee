@@ -37,6 +37,9 @@ class ez5.CustomBaseConfigIUCN extends BaseConfigPlugin
 		getFields = (idTable, path = "") ->
 			mask = Mask.getMaskByMaskName("_all_fields", idTable)
 
+			if not mask.hasTags()
+				return
+
 			if path
 				tableName = path.split(".")[0]
 			else
