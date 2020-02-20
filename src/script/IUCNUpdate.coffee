@@ -212,7 +212,7 @@ class IUCNUpdate
 		if objects.length == 0
 			return CUI.resolvedPromise()
 
-		easydbUrl = @__getEasydbUrl(data.plugin_config.update.easydb_api_url)
+		easydbUrl = @__getEasydbUrl(data.state.easydbUrl)
 		iucnSettings = data.state.config.iucn_settings
 
 		idTagRed = iucnSettings.tag_red
