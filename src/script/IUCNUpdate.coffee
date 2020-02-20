@@ -176,9 +176,11 @@ class IUCNUpdate
 					for object in objectsByIdMap[id]
 						if ez5.IUCNUtil.isEqual(object.data, foundData)
 							# If the data did not change since the last time it was checked, and the __updateTags is true.
-							if object.data.__updateTags
-								delete object.data.__updateTags
+							# __updateTags will be undefined when the object is updated but it was never updated here before.
+							if CUI.util.isUndef(object.data.__updateTags) or object.data.__updateTags
+								object.data.__updateTags = false
 								objectsToUpdateTags.push(object)
+								objectsToUpdate.push(object)
 						else
 							object.data = ez5.IUCNUtil.getSaveData(foundData)
 							object.data.__updateTags = true
