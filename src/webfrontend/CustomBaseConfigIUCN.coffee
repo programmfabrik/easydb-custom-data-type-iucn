@@ -19,9 +19,7 @@ class ez5.CustomBaseConfigIUCN extends BaseConfigPlugin
 					name: fieldName
 					options: options
 			when 'iucn_field_name'
-				options = @__searchInAllObjecttypes((field) ->
-					return field instanceof CustomDataTypeIUCN and field.getFatherField() not instanceof ReverseLinkedTable # For now fields within a reverse linked table are skipped.
-				)
+				options = @__searchInAllObjecttypes()
 
 				field =
 					type: CUI.Select
@@ -31,53 +29,64 @@ class ez5.CustomBaseConfigIUCN extends BaseConfigPlugin
 
 	# Search in all objecttypes using a 'filter' function.
 	# Applies the filter function to each field and adds it to an array of options.
-	__searchInAllObjecttypes: (filter) ->
+	__searchInAllObjecttypes: ->
 		optionsByObjecttype = {}
 
-		getFields = (idTable, path = "") ->
+		addField = (tableName, field, path = "") ->
+			if field not instanceof CustomDataTypeIUCN
+				return
+
+			value = path + field.fullName()
+			# Do not add duplicated fields.
+			if optionsByObjecttype[tableName].some((option) -> option.value == value)
+				return
+
+			optionsByObjecttype[tableName].push
+				text: field.nameLocalized()
+				value: value
+
+		# Avoid using recursive 'getFields' to avoid problems.
+		getLinkedFields = (idTable, path) ->
+			tableName = path.split(".")[0]
+			mask = Mask.getMaskByMaskName("_all_fields", idTable)
+			mask.invokeOnFields("all", true, ((field) =>
+					addField(tableName, field, path)
+			))
+			return
+
+		getFields = (idTable) ->
 			mask = Mask.getMaskByMaskName("_all_fields", idTable)
 
 			if not mask.hasTags()
 				return
 
-			if path
-				tableName = path.split(".")[0]
-			else
-				tableName = mask.table.name()
+			tableName = mask.table.name()
 
 			tableNameLocalized = mask.table.nameLocalized()
 			if not optionsByObjecttype[tableName]
 				optionsByObjecttype[tableName] = [label: tableNameLocalized]
 
 			mask.invokeOnFields("all", true, ((field) =>
+				if field.isTopLevelField() or field.isSystemField() # Skip top level and system fields.
+					return
+
 				if field instanceof LinkedObject
-					idLinkedTable = field.linkMask().table.id()
-					if idLinkedTable == idTable # This is a field with a linked object to the same objecttype.
-						return
-
-					if field.insideNested() # Skip linked objects inside nested.
-						return
-
+					# Skip linked objects to the same object.
 					if field.table.id() == field.linkMask().table.id()
 						return
+					getLinkedFields(field.linkMask().table.id(), field.fullName() + ez5.IUCNUtil.LINK_FIELD_SEPARATOR)
+					return
+				else if field instanceof ReverseLinkedTable
+					for _field in field.getFields("all")
+						if _field not instanceof LinkedObject
+							addField(tableName, field)
+							continue
 
-					getFields(field.linkMask().table.id(), field.fullName() + ez5.IUCNUtil.LINK_FIELD_SEPARATOR)
+						# Linked object.
+						getLinkedFields(_field.linkMask().table.id(), _field.fullName() + ez5.IUCNUtil.LINK_FIELD_SEPARATOR)
 					return
 
-				if field instanceof ReverseLinkedTable
-					return
-
-				if not filter(field)
-					return
-
-				value = path + field.fullName()
-				# Do not add duplicated fields (when 'edit' in linked object is enabled.)
-				if optionsByObjecttype[tableName].some((option) -> option.value == value)
-					return
-
-				optionsByObjecttype[tableName].push
-					text: field.nameLocalized()
-					value: value
+				addField(tableName, field)
 				return
 			))
 

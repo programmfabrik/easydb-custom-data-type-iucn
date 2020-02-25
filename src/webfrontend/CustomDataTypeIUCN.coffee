@@ -105,7 +105,9 @@ class CustomDataTypeIUCN extends CustomDataType
 			onClick: =>
 				searchButton.startSpinner()
 				ez5.IUCNUtil.searchBySpecies(data.searchName).done((response) ->
-					# TODO: When API token not set or invalid, show something.
+					if not response or response.message == "Token not valid!"
+						CUI.alert(text: $$("custom.data.type.iucn.editor.search.token-invalid"), markdown: true)
+						return
 					_data = response.result
 					if not CUI.util.isEmpty(_data)
 						delete data.__notFound

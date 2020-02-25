@@ -135,6 +135,11 @@ class IUCNUpdate
 				scientificName = items[0]
 				deferred = new CUI.Deferred()
 				ez5.IUCNUtil.searchBySpecies(scientificName, apiSettings).done((response) =>
+					if not response
+						deferred.reject("custom.data.type.iucn.update.error.iucn-api-empty-response",
+							iucn_api_settings: apiSettings
+						)
+						return
 					if response.message == "Token not valid!"
 						deferred.reject("custom.data.type.iucn.update.error.iucn-api-token-not-valid",
 							iucn_api_settings: apiSettings
@@ -163,6 +168,11 @@ class IUCNUpdate
 				id = items[0]
 				deferred = new CUI.Deferred()
 				ez5.IUCNUtil.searchBySpeciesId(id, apiSettings).done((response) =>
+					if not response
+						deferred.reject("custom.data.type.iucn.update.error.iucn-api-empty-response",
+							iucn_api_settings: apiSettings
+						)
+						return
 					if response.message == "Token not valid!"
 						deferred.reject("custom.data.type.iucn.update.error.iucn-api-token-not-valid",
 							iucn_api_settings: apiSettings

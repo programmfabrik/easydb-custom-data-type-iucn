@@ -7,6 +7,7 @@ custom.data.type.iucn.output.empty-data,No data set,No data set,No data set,No d
 custom.data.type.iucn.editor.search-input.placeholder,Search by specie name,Search by specie name,Search by specie name,Search by specie name
 custom.data.type.iucn.editor.menu.delete-button|text,Delete,Delete,Delete,Delete
 custom.data.type.iucn.editor.search-button.tooltip,Search,Search,Search,Search
+custom.data.type.iucn.editor.search.token-invalid,IUCN token not valid.,IUCN token not valid.,IUCN token not valid.,IUCN token not valid.
 server.config.group.system.iucn.title,IUCN,IUCN,,
 server.config.group.system.iucn.introduction,IUCN configuration,IUCN configuration,,
 server.config.name.system.iucn_api_settings,API settings,API settings,,
