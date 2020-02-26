@@ -82,7 +82,7 @@ class CustomDataTypeIUCN extends CustomDataType
 				node: div
 				type: "editor-changed"
 
-			if data.idTaxon
+			if data.idTaxon or data.scientificName
 				output = @__getOutput(data, true, =>
 					ez5.IUCNUtil.setObjectData(data) # Empty data.
 					toggleOutput()
@@ -97,25 +97,26 @@ class CustomDataTypeIUCN extends CustomDataType
 		return div
 
 	__getSearchField: (data, onSearch) ->
+		doSearch = =>
+			searchButton.startSpinner()
+			ez5.IUCNUtil.searchBySpecies(data.searchName).done((response) ->
+				if not response or response.message == "Token not valid!"
+					CUI.alert(text: $$("custom.data.type.iucn.editor.search.token-invalid"), markdown: true)
+					return
+				_data = response.result
+				if CUI.util.isEmpty(_data)
+					ez5.IUCNUtil.setObjectData(data, scientific_name: data.searchName)
+				else
+					ez5.IUCNUtil.setObjectData(data, _data)
+				onSearch()
+			).always(-> searchButton.stopSpinner())
+
 		searchButton = new CUI.Button
 			icon: "search"
 			class: "ez5-custom-data-type-iucn-search-button"
 			tooltip:
 				text: $$("custom.data.type.iucn.editor.search-button.tooltip")
-			onClick: =>
-				searchButton.startSpinner()
-				ez5.IUCNUtil.searchBySpecies(data.searchName).done((response) ->
-					if not response or response.message == "Token not valid!"
-						CUI.alert(text: $$("custom.data.type.iucn.editor.search.token-invalid"), markdown: true)
-						return
-					_data = response.result
-					if not CUI.util.isEmpty(_data)
-						delete data.__notFound
-						ez5.IUCNUtil.setObjectData(data, _data)
-					else
-						data.__notFound = true
-					onSearch()
-				).always(-> searchButton.stopSpinner())
+			onClick: doSearch
 
 		toggleButton = ->
 			if CUI.util.isEmpty(data.searchName)
@@ -133,6 +134,14 @@ class CustomDataTypeIUCN extends CustomDataType
 			onDataChanged: toggleButton
 		searchInput.start()
 
+		CUI.Events.listen
+			node: searchInput
+			type: "keyup"
+			call: (ev) =>
+				if ev.keyCode() != 13
+					return
+				doSearch()
+				return
 
 		layout = new CUI.HorizontalLayout
 			center:
@@ -148,12 +157,6 @@ class CustomDataTypeIUCN extends CustomDataType
 			statusText = $$("custom.data.type.iucn.output.status.unclear.text")
 		else
 			statusText = $$("custom.data.type.iucn.output.no-status.text")
-
-		list = new CUI.VerticalList(content: [
-			new CUI.Label(text: data.mainCommonName, appearance: "title", multiline: true)
-			new CUI.Label(text: "#{data.idTaxon} - #{data.scientificName}", appearance: "secondary")
-			new CUI.Label(text: statusText, appearance: "secondary")
-		])
 
 		if isEditor
 			menuButton = new LocaButton
@@ -179,12 +182,21 @@ class CustomDataTypeIUCN extends CustomDataType
 		if isEditor
 			rightContent.append(menuButton, "right")
 
+		if data.idTaxon
+			content = new CUI.VerticalList(content: [
+				new CUI.Label(text: data.mainCommonName, appearance: "title", multiline: true)
+				new CUI.Label(text: "#{data.idTaxon} - #{data.scientificName}", appearance: "secondary")
+				new CUI.Label(text: statusText, appearance: "secondary")
+			])
+		else
+			content = new CUI.Label(text: data.scientificName)
+
 		layout = new CUI.HorizontalLayout(
 			class: "ez5-field-object ez5-custom-data-type-iucn-card"
 			left:
 				content: @__getLogoImage()
 			center:
-				content: list
+				content: content
 			right:
 				content: rightContent
 		)
@@ -192,8 +204,6 @@ class CustomDataTypeIUCN extends CustomDataType
 
 	renderDetailOutput: (data, _, opts) ->
 		data = @__initData(data)
-		if not data.idTaxon
-			return new CUI.EmptyLabel(text: $$("custom.data.type.iucn.output.empty-data"))
 		return @__getOutput(data)
 
 	getSaveData: (data, save_data) ->
@@ -209,7 +219,7 @@ class CustomDataTypeIUCN extends CustomDataType
 		if opts.mode == "expert"
 			return CUI.util.isEmpty(data?.trim())
 
-		return CUI.util.isEmpty(data?.idTaxon)
+		return CUI.util.isEmpty(data?.idTaxon) and CUI.util.isEmpty(data?.scientificName)
 
 	__initData: (data) ->
 		if not data[@name()]

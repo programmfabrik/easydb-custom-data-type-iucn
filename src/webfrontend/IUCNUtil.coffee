@@ -38,10 +38,15 @@ class ez5.IUCNUtil
 		# TODO: Check this, by default both are not unclear or redlist.
 		object.unclear = false
 		object.redList = false
+
 		if CUI.util.isArray(data)
 			if data.length > 1 # When there is more than 1 result it means that the status is unclear.
 				object.unclear = true
 			data = data[0]
+
+		if not data.taxonid # Not found
+			object.scientificName = data.scientific_name
+			return object
 
 		if not object.unclear
 			object.redList = data.category in ["EX", "EW", "CR", "EN", "VU"]
