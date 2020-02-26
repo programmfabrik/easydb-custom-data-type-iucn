@@ -32,7 +32,7 @@ class ez5.CustomBaseConfigIUCN extends BaseConfigPlugin
 	__searchInAllObjecttypes: ->
 		optionsByObjecttype = {}
 
-		addField = (tableName, field, path = "") ->
+		addField = (tableName, field, path = "", fieldPath = []) ->
 			if field not instanceof CustomDataTypeIUCN
 				return
 
@@ -41,16 +41,21 @@ class ez5.CustomBaseConfigIUCN extends BaseConfigPlugin
 			if optionsByObjecttype[tableName].some((option) -> option.value == value)
 				return
 
+			fieldPath.push(field)
+			label = fieldPath.map((_field) -> _field.fullNameLocalized()).join(" / ")
 			optionsByObjecttype[tableName].push
-				text: field.nameLocalized()
+				text: label
 				value: value
 
 		# Avoid using recursive 'getFields' to avoid problems.
-		getLinkedFields = (idTable, path) ->
+		getLinkedFields = (linkedField) ->
+			idTable = linkedField.linkMask().table.id()
+			path = linkedField.fullName() + ez5.IUCNUtil.LINK_FIELD_SEPARATOR
+
 			tableName = path.split(".")[0]
 			mask = Mask.getMaskByMaskName("_all_fields", idTable)
 			mask.invokeOnFields("all", true, ((field) =>
-					addField(tableName, field, path)
+					addField(tableName, field, path, [linkedField])
 			))
 			return
 
@@ -74,16 +79,16 @@ class ez5.CustomBaseConfigIUCN extends BaseConfigPlugin
 					# Skip linked objects to the same object.
 					if field.table.id() == field.linkMask().table.id()
 						return
-					getLinkedFields(field.linkMask().table.id(), field.fullName() + ez5.IUCNUtil.LINK_FIELD_SEPARATOR)
+					getLinkedFields(field)
 					return
 				else if field instanceof ReverseLinkedTable
 					for _field in field.getFields("all")
 						if _field not instanceof LinkedObject
-							addField(tableName, field)
+							addField(tableName, _field)
 							continue
 
 						# Linked object.
-						getLinkedFields(_field.linkMask().table.id(), _field.fullName() + ez5.IUCNUtil.LINK_FIELD_SEPARATOR)
+						getLinkedFields(_field)
 					return
 
 				addField(tableName, field)
