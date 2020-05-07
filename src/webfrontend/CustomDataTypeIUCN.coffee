@@ -240,4 +240,7 @@ class CustomDataTypeIUCN extends CustomDataType
 	renderFieldAsGroup: ->
 		return false
 
+	supportsStandard: ->
+		return true
+
 CustomDataType.register(CustomDataTypeIUCN)
