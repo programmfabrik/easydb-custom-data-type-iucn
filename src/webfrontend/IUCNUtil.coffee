@@ -52,8 +52,8 @@ class ez5.IUCNUtil
 			object.redList = data.category in ["EX", "EW", "CR", "EN", "VU"]
 
 		object.idTaxon = "#{data.taxonid}"
-		object.scientificName = data.scientific_name
-		object.mainCommonName = data.main_common_name
+		object.scientificName = data.scientific_name or ""
+		object.mainCommonName = data.main_common_name or ""
 		object.category = data.category
 		return object
 
