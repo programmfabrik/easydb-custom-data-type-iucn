@@ -20,6 +20,7 @@ class ez5.IUCNUtil
 		return ez5.IUCNUtil.get(url)
 
 	@get: (url) ->
+		url = encodeURI(url)
 		xhr = new CUI.XHR
 			method: "GET"
 			url: url
