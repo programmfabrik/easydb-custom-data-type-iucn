@@ -157,7 +157,9 @@ class IUCNUpdate
 						object.data.__updateTags = true
 						objectsToUpdate.push(object)
 					return deferred.resolve()
-				).fail(deferred.reject)
+				).fail((responseError) =>
+					return deferred.reject("custom.data.type.iucn.update.error.iucn-api-call", data: responseError.data, responseError.status);
+				)
 				return deferred.promise()
 		)
 
@@ -196,7 +198,9 @@ class IUCNUpdate
 							object.data.__updateTags = true
 							objectsToUpdate.push(object)
 					return deferred.resolve()
-				).fail(deferred.reject)
+				).fail((responseError) =>
+					return deferred.reject("custom.data.type.iucn.update.error.iucn-api-call", data: responseError.data, responseError.status);
+				)
 				return deferred.promise()
 		)
 
@@ -216,8 +220,8 @@ class IUCNUpdate
 			).fail((messageKey, opts = {}) =>
 				ez5.respondError(messageKey, opts)
 			)
-		).fail((messageKey, opts = {}) =>
-			ez5.respondError(messageKey, opts)
+		).fail((messageKey, opts = {}, statusCode) =>
+			ez5.respondError(messageKey, opts, statusCode)
 		)
 
 	__updateTags: (objects, data) ->
