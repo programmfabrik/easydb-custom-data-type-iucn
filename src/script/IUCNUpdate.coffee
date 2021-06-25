@@ -158,7 +158,11 @@ class IUCNUpdate
 						objectsToUpdate.push(object)
 					return deferred.resolve()
 				).fail((responseError) =>
-					return deferred.reject("custom.data.type.iucn.update.error.iucn-api-call", data: responseError.data, responseError.status);
+					_data =
+						errorData: responseError.data
+						apiSettings: apiSettings
+						scientificName: scientificName
+					return deferred.reject("custom.data.type.iucn.update.error.iucn-api-call", data: _data, responseError.status);
 				)
 				return deferred.promise()
 		)
@@ -199,7 +203,11 @@ class IUCNUpdate
 							objectsToUpdate.push(object)
 					return deferred.resolve()
 				).fail((responseError) =>
-					return deferred.reject("custom.data.type.iucn.update.error.iucn-api-call", data: responseError.data, responseError.status);
+					_data =
+						errorData: responseError.data
+						apiSettings: apiSettings
+						speciesId: id
+					return deferred.reject("custom.data.type.iucn.update.error.iucn-api-call", data: _data, responseError.status);
 				)
 				return deferred.promise()
 		)
