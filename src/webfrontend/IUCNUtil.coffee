@@ -10,7 +10,7 @@ class ez5.IUCNUtil
 	@searchBySpecies: (species, apiSettings) ->
 		if not apiSettings
 			apiSettings = ez5.IUCNUtil.getApiSettings()
-		url = apiSettings.api_url + ez5.IUCNUtil.ENDPOINT_SPECIES + species + "?token=" + apiSettings.api_token
+		url = apiSettings.api_url + ez5.IUCNUtil.ENDPOINT_SPECIES + encodeURIComponent(species) + "?token=" + apiSettings.api_token
 		return ez5.IUCNUtil.get(url)
 
 	@searchBySpeciesId: (id, apiSettings) ->
@@ -20,7 +20,6 @@ class ez5.IUCNUtil
 		return ez5.IUCNUtil.get(url)
 
 	@get: (url) ->
-		url = encodeURI(url)
 		xhr = new CUI.XHR
 			method: "GET"
 			url: url
