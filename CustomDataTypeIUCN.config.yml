@@ -21,8 +21,8 @@ custom_types:
   iucn:
     update:
       script: build/scripts/iucn-update.js
-      timeout: 30
-      batch_size: 1000
+      timeout: 10000
+      batch_size: 100
       interval_base_config: update_interval_iucn.days
     mapping:
       idTaxon:
