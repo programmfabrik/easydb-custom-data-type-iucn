@@ -41,7 +41,7 @@ ${UPDATE_SCRIPT_BUILD_FILE}: $(subst .coffee,.coffee.js,${UPDATE_SCRIPT_COFFEE_F
 	cat $^ > $@
 
 include $(EASYDB_LIB)/tools/base-plugins.make
-build: code $(L10N) $(COPY_LOGO) $(UPDATE_SCRIPT_BUILD_FILE)
+build: code $(L10N) $(COPY_LOGO) $(UPDATE_SCRIPT_BUILD_FILE) buildinfojson
 
 code: $(JS) css
 
