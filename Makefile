@@ -16,7 +16,7 @@ INSTALL_FILES = \
 	build/scripts/iucn-update.js \
 	$(CSS) \
 	$(JS) \
-	CustomDataTypeIUCN.config.yml
+	manifest.yml
 
 COFFEE_FILES = src/webfrontend/IUCNUtil.coffee \
 	src/webfrontend/CustomDataTypeIUCN.coffee \
