@@ -1,4 +1,5 @@
 PLUGIN_NAME = custom-data-type-iucn
+PLUGIN_PATH = easydb-custom-data-type-iucn
 
 EASYDB_LIB = easydb-library
 
