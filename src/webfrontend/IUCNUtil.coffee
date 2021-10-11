@@ -2,6 +2,7 @@ class ez5.IUCNUtil
 
 	@ENDPOINT_SPECIES = "/species/"
 	@ENDPOINT_SPECIES_ID = "/species/id/"
+	@ENDPOINT_SPECIES_PAGE = "/species/page/"
 	@LINK_FIELD_SEPARATOR = ":__link:" # The link separator is used to separate iucn fields from their linked fields.
 
 	@getFieldType: ->
@@ -18,6 +19,28 @@ class ez5.IUCNUtil
 			apiSettings = ez5.IUCNUtil.getApiSettings()
 		url = apiSettings.api_url + ez5.IUCNUtil.ENDPOINT_SPECIES_ID + id + "?token=" + apiSettings.api_token
 		return ez5.IUCNUtil.get(url)
+
+	@fetchAllSpecies: (apiSettings) ->
+		if not apiSettings
+			apiSettings = ez5.IUCNUtil.getApiSettings()
+
+		data = objects: []
+		deferred = new CUI.Deferred()
+		fetchPage = (page = 0) ->
+			url = apiSettings.api_url + ez5.IUCNUtil.ENDPOINT_SPECIES_PAGE + page + "?token=" + apiSettings.api_token
+			ez5.IUCNUtil.get(url).done((response) =>
+				if not response or response.message
+					return deferred.resolve(response)
+
+				if response.count > 0
+					data.objects = data.objects.concat(response.result)
+					page++
+					fetchPage(page)
+				else
+					deferred.resolve(data)
+			).fail(deferred.reject)
+		fetchPage()
+		return deferred.promise()
 
 	@get: (url) ->
 		xhr = new CUI.XHR

@@ -126,93 +126,63 @@ class IUCNUpdate
 		objectsToUpdate = []
 		objectsToUpdateTags = []
 
-		# The response of the API returns 200 - 'message': "Token not valid!" when the token is not valid.
-		# For now we will be using this to check it.
-		chunkByName = CUI.chunkWork.call(@,
-			items: Object.keys(objectsByNameMap)
-			chunk_size: 1
-			call: (items) =>
-				scientificName = items[0]
-				deferred = new CUI.Deferred()
-				ez5.IUCNUtil.searchBySpecies(scientificName, apiSettings).done((response) =>
-					if not response
-						deferred.reject("custom.data.type.iucn.update.error.iucn-api-empty-response",
-							iucn_api_settings: apiSettings
-						)
-						return
-					if response.message == "Token not valid!"
-						deferred.reject("custom.data.type.iucn.update.error.iucn-api-token-not-valid",
-							iucn_api_settings: apiSettings
-							response: response
-						)
-						return
-					objectsFound = response.result
-					if CUI.util.isEmpty(objectsFound)
-						return deferred.resolve()
-					foundData = ez5.IUCNUtil.setObjectData({}, objectsFound)
-					for object in objectsByNameMap[scientificName]
+		speciesByName = {}
+		speciesById = {}
+
+		deferred = new CUI.Deferred()
+		ez5.IUCNUtil.fetchAllSpecies(apiSettings).done((response) =>
+			# The response of the API returns 200 - 'message': "Token not valid!" when the token is not valid.
+			# For now we will be using this to check it.
+			if not response
+				_data = iucn_api_settings: apiSettings
+				ez5.respondError("custom.data.type.iucn.update.error.iucn-api-empty-response", data: _data)
+				return deferred.reject()
+			if response.message == "Token not valid!"
+				_data =
+					iucn_api_settings: apiSettings
+					response: response
+				ez5.respondError("custom.data.type.iucn.update.error.iucn-api-token-not-valid", data: _data)
+				return deferred.reject()
+
+			# Save objects in two maps to be able to quickly access by id and by scientific name.
+			for object in response.objects
+				speciesById[object.taxonid] = object
+				# It can be the case where more than one result share the same scientific name,
+				# so we have to keep track of that because it means that the state is 'unclear'
+				if not speciesByName[object.scientific_name]
+					speciesByName[object.scientific_name] = []
+				speciesByName[object.scientific_name].push(object)
+
+			for scientificName in Object.keys(objectsByNameMap)
+				objectsFound = speciesByName[scientificName]
+				if CUI.util.isEmpty(objectsFound)
+					continue
+				foundData = ez5.IUCNUtil.setObjectData({}, objectsFound)
+				for object in objectsByNameMap[scientificName]
+					object.data = ez5.IUCNUtil.getSaveData(foundData)
+					# Object is updated now. Next time that the script is executed with this object
+					# the tags of the top level object will be updated.
+					object.data.__updateTags = true
+					objectsToUpdate.push(object)
+
+			for id in Object.keys(objectsByIdMap)
+				objectFound = speciesById[id]
+				if CUI.util.isEmpty(objectFound)
+					continue
+				foundData = ez5.IUCNUtil.setObjectData({}, objectFound)
+				for object in objectsByIdMap[id]
+					if ez5.IUCNUtil.isEqual(object.data, foundData)
+						# If the data did not change since the last time it was checked, and the __updateTags is true.
+						# __updateTags will be undefined when the object is updated but it was never updated here before.
+						if CUI.util.isUndef(object.data.__updateTags) or object.data.__updateTags
+							object.data.__updateTags = false
+							objectsToUpdateTags.push(object)
+							objectsToUpdate.push(object)
+					else
 						object.data = ez5.IUCNUtil.getSaveData(foundData)
-						# Object is updated now. Next time that the script is executed with this object
-						# the tags of the top level object will be updated.
 						object.data.__updateTags = true
 						objectsToUpdate.push(object)
-					return deferred.resolve()
-				).fail((responseError) =>
-					_data =
-						errorData: responseError.data
-						apiSettings: apiSettings
-						scientificName: scientificName
-					return deferred.reject("custom.data.type.iucn.update.error.iucn-api-call", data: _data, responseError.status);
-				)
-				return deferred.promise()
-		)
 
-		chunkById = CUI.chunkWork.call(@,
-			items: Object.keys(objectsByIdMap)
-			chunk_size: 1
-			call: (items) =>
-				id = items[0]
-				deferred = new CUI.Deferred()
-				ez5.IUCNUtil.searchBySpeciesId(id, apiSettings).done((response) =>
-					if not response
-						deferred.reject("custom.data.type.iucn.update.error.iucn-api-empty-response",
-							iucn_api_settings: apiSettings
-						)
-						return
-					if response.message == "Token not valid!"
-						deferred.reject("custom.data.type.iucn.update.error.iucn-api-token-not-valid",
-							iucn_api_settings: apiSettings
-							response: response
-						)
-						return
-					objectsFound = response.result
-					if CUI.util.isEmpty(objectsFound)
-						return deferred.resolve()
-					foundData = ez5.IUCNUtil.setObjectData({}, objectsFound)
-					for object in objectsByIdMap[id]
-						if ez5.IUCNUtil.isEqual(object.data, foundData)
-							# If the data did not change since the last time it was checked, and the __updateTags is true.
-							# __updateTags will be undefined when the object is updated but it was never updated here before.
-							if CUI.util.isUndef(object.data.__updateTags) or object.data.__updateTags
-								object.data.__updateTags = false
-								objectsToUpdateTags.push(object)
-								objectsToUpdate.push(object)
-						else
-							object.data = ez5.IUCNUtil.getSaveData(foundData)
-							object.data.__updateTags = true
-							objectsToUpdate.push(object)
-					return deferred.resolve()
-				).fail((responseError) =>
-					_data =
-						errorData: responseError.data
-						apiSettings: apiSettings
-						speciesId: id
-					return deferred.reject("custom.data.type.iucn.update.error.iucn-api-call", data: _data, responseError.status);
-				)
-				return deferred.promise()
-		)
-
-		return CUI.when([chunkByName, chunkById]).done( =>
 			@__updateTags(objectsToUpdateTags, data).done(=>
 				response = payload: objectsToUpdate
 				if data.batch_info and data.batch_info.offset + data.objects.length >= data.batch_info.total
@@ -228,9 +198,15 @@ class IUCNUpdate
 			).fail((messageKey, opts = {}) =>
 				ez5.respondError(messageKey, opts)
 			)
-		).fail((messageKey, opts = {}, statusCode) =>
-			ez5.respondError(messageKey, opts, statusCode)
+		).fail((responseError) =>
+			_data =
+				errorData: responseError.data
+				apiCall: ez5.IUCNUtil.ENDPOINT_SPECIES_PAGE
+				apiSettings: apiSettings
+			ez5.respondError("custom.data.type.iucn.update.error.iucn-api-call", data: _data, responseError.status)
+			return deferred.reject()
 		)
+		return deferred.promise()
 
 	__updateTags: (objects, data) ->
 		if objects.length == 0
