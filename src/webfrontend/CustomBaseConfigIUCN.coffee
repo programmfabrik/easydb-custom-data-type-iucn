@@ -72,6 +72,9 @@ class ez5.CustomBaseConfigIUCN extends BaseConfigPlugin
 				optionsByObjecttype[tableName] = [label: tableNameLocalized]
 
 			mask.invokeOnFields("all", true, ((field) =>
+				if field instanceof MaskSplitter
+					return
+
 				if field.isTopLevelField() or field.isSystemField() # Skip top level and system fields.
 					return
 
