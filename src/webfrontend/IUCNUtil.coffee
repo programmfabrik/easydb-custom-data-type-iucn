@@ -102,7 +102,7 @@ class ez5.IUCNUtil
 		return saveData
 
 	@getApiSettings: ->
-		return ez5.session.config.base.system.iucn_api_settings
+		return ez5.session.getBaseConfig("plugin", "custom-data-type-iucn").iucn_api_settings
 
 	@getSettings: ->
-		return ez5.session.config.base.system.iucn_settings
+		return ez5.session.getBaseConfig("plugin", "custom-data-type-iucn").iucn_settings
