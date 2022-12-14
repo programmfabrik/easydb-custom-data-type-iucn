@@ -56,6 +56,7 @@
             },
             "store_response_qjson": {
                 "global_object_ids[]": "body.0._global_object_id",
+                "main_ot_global_object_ids[]": "body.0._global_object_id",
                 "sys_id_{{ $row.ref }}": "body.0._system_object_id",
                 "id_{{ $row.ref }}": "body.0.{{ $row.objecttype }}._id"
             }

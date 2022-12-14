@@ -1,0 +1,10 @@
+skip,objecttype,refs,comment,has_iucn_tag
+bool,string,"string,array",string,bool
+FALSE,fungarium,"fung_2,fung_3,fung_5",add IUCN tags,TRUE
+FALSE,entomologie,"ento_2,ento_3,ento_5",add IUCN tags,TRUE
+FALSE,herbarien,"herb_2,herb_3,herb_5",add IUCN tags,TRUE
+FALSE,xylothek,"xylo_2,xylo_3,xylo_5",add IUCN tags,TRUE
+FALSE,fungarium,"fung_1,fung_4,fung_6",remove IUCN tags,FALSE
+FALSE,entomologie,"ento_1,ento_4,ento_6",remove IUCN tags,FALSE
+FALSE,herbarien,"herb_1,herb_4,herb_6",remove IUCN tags,FALSE
+FALSE,xylothek,"xylo_1,xylo_4,xylo_6",remove IUCN tags,FALSE

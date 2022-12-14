@@ -1,0 +1,95 @@
+[
+    // group edit: update all objects where IUCN tags are added
+    {{ range $idx, $row := file_csv `tag_changes_group_edit.csv` }}
+        {{ if $row.skip }} {{ continue }} {{ end }}
+        {{ if not $row.has_iucn_tag }} {{ continue }} {{ end }}
+        {
+            "name": "POST /api/v1/db/{{ $row.objecttype }}: {{ $row.comment }}",
+            "request": {
+                "body": [
+                    {
+                        "_comment": "tag_add",
+                        "_mask": "_all_fields",
+                        "_tags:group_mode": "tag_add",
+                        "_tags": [
+                            {
+                                "_id": {{ datastore "tag_id_iucn_unclear" }}
+                            },
+                            {
+                                "_id": {{ datastore "tag_id_iucn_redlist" }}
+                            }
+                        ],
+                        "_objecttype": {{ $row.objecttype | marshal }},
+                        {{ $row.objecttype | marshal }}: {
+                            "_id": [
+                                {{ range $idx2, $ref := $row.refs }}
+                                    {{ trim $ref | printf "id_%s" | datastore }},
+                                {{ end }}
+                            ]
+                        }
+                    }
+                ],
+                "endpoint": "db/{{ $row.objecttype }}",
+                "method": "POST",
+                "header_from_store": {
+                    "x-easydb-token": "xEasyToken"
+                }
+            },
+            "response": {
+                "statuscode": 200
+            },
+            "store_response_qjson": {}
+        },
+    {{ end }}
+
+
+    // group edit: update all objects where IUCN tags are removed
+    {{ range $idx, $row := file_csv `tag_changes_group_edit.csv` }}
+        {{ if $row.skip }} {{ continue }} {{ end }}
+        {{ if $row.has_iucn_tag }} {{ continue }} {{ end }}
+        {
+            "name": "POST /api/v1/db/{{ $row.objecttype }}: group edit: {{ $row.comment }}",
+            "request": {
+                "body": [
+                    {
+                        "_comment": "tag_remove",
+                        "_mask": "_all_fields",
+                        "_tags:group_mode": "tag_remove",
+                        "_tags": [
+                            {
+                                "_id": {{ datastore "tag_id_iucn_unclear" }}
+                            },
+                            {
+                                "_id": {{ datastore "tag_id_iucn_redlist" }}
+                            }
+                        ],
+                        "_objecttype": {{ $row.objecttype | marshal }},
+                        {{ $row.objecttype | marshal }}: {
+                            "_id": [
+                                {{ range $idx2, $ref := $row.refs }}
+                                    {{ trim $ref | printf "id_%s" | datastore }},
+                                {{ end }}
+                            ]
+                        }
+                    }
+                ],
+                "endpoint": "db/{{ $row.objecttype }}",
+                "method": "POST",
+                "header_from_store": {
+                    "x-easydb-token": "xEasyToken"
+                }
+            },
+            "response": {
+                "statuscode": 200
+            }
+        },
+    {{ end }}
+
+    // set global object ids that need to be indexed
+    {
+        "name": "set global object ids that need to be indexed",
+        "store": {
+            "global_object_ids": {{ datastore "main_ot_global_object_ids" | marshal }}
+        }
+    }
+]

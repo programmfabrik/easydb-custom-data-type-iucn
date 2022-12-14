@@ -1,8 +1,8 @@
 [
-    {{ range $idx, $row := file_csv `objects.csv` }}
+    {{ range $idx, $row := file_csv `tag_changes.csv` }}
         {{ if $row.skip }} {{ continue }} {{ end }}
-        {{ if eq $row.objecttype `mediaasset` }} {{ continue }} {{ end }}
 
+        // search for main objects, check for the mediaassetpublic and mediaassetnonpublic arrays with linked objects
         {
             "name": "POST /api/v1/search: {{ $row.objecttype }}.migreferenz={{ $row.ref }}",
             "request": {
@@ -53,6 +53,10 @@
                                             },
                                         {{ end }}
                                     ],
+                                {{ else }}
+                                    "_reverse_nested:{{ $row.objecttype }}_mediaassetpublic:{{ $row.objecttype }}:control": {
+                                        "no_extra": true
+                                    },
                                 {{ end }}
 
                                 {{ if gt ( $row.mediaasset_nonpublic | marshal | unmarshal | len ) 0 }}
@@ -67,15 +71,19 @@
                                             },
                                         {{ end }}
                                     ],
+                                {{ else }}
+                                    "_reverse_nested:{{ $row.objecttype }}_mediaassetnonpublic:{{ $row.objecttype }}:control": {
+                                        "no_extra": true
+                                    },
                                 {{ end }}
                             }
                         }
                     ]
                 },
                 "statuscode": 200
-            },
-            "delay_ms": 1000,
-            "timeout_ms": 60000
+            }
+            , "delay_ms": 1000
+            , "timeout_ms": 60000
         },
     {{ end }}
 ]

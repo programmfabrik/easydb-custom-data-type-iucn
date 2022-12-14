@@ -6,5 +6,10 @@
     "@root_session.json",
     "@setup_datamodel.json",
     "@insert_tags.json",
-    "@setup_baseconfig.json"
+    "@setup_baseconfig.json",
+    {
+        "store": {
+            "main_ot_global_object_ids": null
+        }
+    }
 ]

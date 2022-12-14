@@ -6,17 +6,26 @@
     },
     "store": {},
     "tests": [
+        // #1: update objects in single edit mode
         "@init/init.json"
         , "@insert_mediaasset.json"
         , "@insert_main_objecttypes.json"
         , "@insert_mediaasset_link_objects.json"
         , "@index/poll.json"
         , "@get_main_objects.json"
-        // , "@search_for_mediaassets_before_plugin.json"
-
-        // update tags in objects, search for the newly created/deleted media asset link objects
         , "@change_tags_single_edit_mode.json"
         , "@index/poll.json"
-        , "@search_for_mediaassets_after_plugin.json"
+        , "@search_after_plugin.json"
+
+        // #2: update objects in group edit mode
+        , "@init/init.json"
+        , "@insert_mediaasset.json"
+        , "@insert_main_objecttypes.json"
+        , "@insert_mediaasset_link_objects.json"
+        , "@index/poll.json"
+        , "@get_main_objects.json"
+        , "@change_tags_group_edit_mode.json"
+        , "@index/poll.json"
+        , "@search_after_plugin.json"
     ]
 }

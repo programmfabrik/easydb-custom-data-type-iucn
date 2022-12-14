@@ -65,10 +65,10 @@ def pre_update(easydb_context, easydb_info):
     iucnObjectsHandler = IucnObjectHandler(
         easydb_context, LOGGER_NAME, user_id)
 
-    token = util.get_json_value(session, 'token')
-    if not isinstance(token, str):
-        raise TypeMismatchError('session.token', 'str')
-    logger.debug('session token valid')
+    # token = util.get_json_value(session, 'token')
+    # if not isinstance(token, str):
+    #     raise TypeMismatchError('session.token', 'str')
+    # logger.debug('session token valid')
 
     # load info from the base config
     config = easydb_context.get_config()
@@ -119,17 +119,20 @@ def pre_update(easydb_context, easydb_info):
     group_edit = False
     for obj in data:
 
-        # only consider updated objects
-        obj_version = util.get_json_value(obj, main_objecttype + '._version')
-        if not isinstance(obj_version, int):
-            continue
-        if obj_version < 2:
-            continue
-
         ids = set()
         obj_id = util.get_json_value(obj, main_objecttype + '._id')
+
         if isinstance(obj_id, int):
+            # only consider updated objects
+            obj_version = util.get_json_value(
+                obj, main_objecttype + '._version')
+            if not isinstance(obj_version, int):
+                continue
+            if obj_version < 2:
+                continue
+
             ids.add(obj_id)
+
         elif isinstance(obj_id, list):
             # group edit mode
             group_edit = True
@@ -137,8 +140,10 @@ def pre_update(easydb_context, easydb_info):
                 if not isinstance(id, int):
                     continue
                 ids.add(id)
+
         else:
             continue
+
         logger.info('{0} edit mode: {1} {2} object ids'.format(
             'group' if group_edit else 'single',
             len(ids),
@@ -177,8 +182,7 @@ def pre_update(easydb_context, easydb_info):
                         'in': list(objects_with_iucn_tags) + list(objects_without_iucn_tags)
                     }
                 ]
-            },
-            limit=6  # xxx
+            }
         )
 
         # iterate over the objects in the search result
@@ -339,5 +343,5 @@ def pre_update(easydb_context, easydb_info):
 
     # todo create collections
 
-    logger.debug('response: {0}'.format(util.dumpjs(data)))
+    # logger.debug('response: {0}'.format(util.dumpjs(data)))
     return data
