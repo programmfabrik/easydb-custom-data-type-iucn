@@ -1,0 +1,42 @@
+[
+    {{ range $idx, $row := file_csv `objects.csv` }}
+        {{ if $row.skip }} {{ continue }} {{ end }}
+        {{ if ne $row.objecttype `mediaasset` }} {{ continue }} {{ end }}
+
+        {
+            "name": "POST /api/v1/db/mediaasset {{ $row.ref }}",
+            "request": {
+                "body": [
+                    {
+                        "_mask": "_all_fields",
+                        "_objecttype": "mediaasset",
+                        "mediaasset": {
+                            "_pool": {
+                                "pool": {
+                                    "lookup:_id": {
+                                        "reference": "system:standard"
+                                    }
+                                }
+                            },
+                            "_version": 1,
+                            "barcode": {{ $row.ref | marshal }}
+                        }
+                    }
+                ],
+                "endpoint": "db/mediaasset",
+                "method": "POST",
+                "header_from_store": {
+                    "x-easydb-token": "xEasyToken"
+                }
+            },
+            "response": {
+                "body": [],
+                "statuscode": 200
+            },
+            "store_response_qjson": {
+                "id_{{ $row.ref }}": "body.0.mediaasset._id",
+                "global_object_ids[]": "body.0._global_object_id"
+            }
+        },
+    {{ end }}
+]

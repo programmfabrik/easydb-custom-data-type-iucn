@@ -1,0 +1,10 @@
+[
+    "@get_settings.json",
+    "@root_session.json",
+    "@purge.json",
+    "@get_settings.json",
+    "@root_session.json",
+    "@setup_datamodel.json",
+    "@insert_tags.json",
+    "@setup_baseconfig.json"
+]

@@ -1,0 +1,97 @@
+[
+    {
+        "name": "POST /api/v1/tags",
+        "request": {
+            "body": [
+                {
+                    "_tags": [
+                        {
+                            "tag": {
+                                "displayname": {
+                                    "de-DE": "UNCLEAR",
+                                    "en-US": "UNCLEAR"
+                                },
+                                "displaytype": "facet",
+                                "enabled": true,
+                                "frontend_prefs": {
+                                    "webfrontend": {
+                                        "color": "yellow",
+                                        "icon": "fa-circle"
+                                    }
+                                },
+                                "is_default": false,
+                                "reference": "iucn_unclear",
+                                "sticky": false,
+                                "type": "individual"
+                            }
+                        },
+                        {
+                            "tag": {
+                                "displayname": {
+                                    "de-DE": "REDLIST",
+                                    "en-US": "REDLIST"
+                                },
+                                "displaytype": "facet",
+                                "enabled": true,
+                                "frontend_prefs": {
+                                    "webfrontend": {
+                                        "color": "red",
+                                        "icon": "fa-circle"
+                                    }
+                                },
+                                "is_default": false,
+                                "reference": "iucn_redlist",
+                                "sticky": false,
+                                "type": "individual"
+                            }
+                        }
+                    ],
+                    "taggroup": {
+                        "displayname": {
+                            "de-DE": "IUCN",
+                            "en-US": "IUCN"
+                        },
+                        "type": "checkbox"
+                    }
+                }
+            ],
+            "endpoint": "tags",
+            "method": "POST",
+            "header_from_store": {
+                "x-easydb-token": "xEasyToken"
+            }
+        },
+        "response": {
+            "body": [
+                {
+                    "_tags:control": {
+                        "order_matters": true
+                    },
+                    "_tags": [
+                        {
+                            "tag": {
+                                "reference": "iucn_unclear",
+                                "_id:control": {
+                                    "is_number": true
+                                }
+                            }
+                        },
+                        {
+                            "tag": {
+                                "reference": "iucn_redlist",
+                                "_id:control": {
+                                    "is_number": true
+                                }
+                            }
+                        }
+                    ]
+                }
+            ],
+            "statuscode": 200
+        },
+        "store_response_qjson": {
+            "tag_id_iucn_unclear": "body.0._tags.0.tag._id",
+            "tag_id_iucn_redlist": "body.0._tags.1.tag._id"
+        }
+    }
+]

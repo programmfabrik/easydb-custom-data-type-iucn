@@ -1,0 +1,330 @@
+# SCHEMA DUMP easydb-philipp_nahima_migration29.11.2022 13:29;;;;;;;
+;;;;;;;
+;;;;;;;
+### TABLE ENTOMOLOGIE;;;;;;;
+ID;245;;;;;;
+NAME;entomologie;;;;;;
+POOL;true;;;;;;
+HIERARCHICAL;;;;;;;
+TAGS;true;;;;;;
+ACL;;;;;;;
+SEARCH;true;;;;;;
+COMMENT;Entomologie-Sammlung;;;;;;
+DISPLAYNAME:en-US;Entomology;;;;;;
+DISPLAYNAME:de-DE;Entomologie;;;;;;
+;;;;;;;
+;;;;;;;
+### COLUMNS;;;;;;;
+TABLE;NAME;TYPE;NOT_NULL;UNIQUE;ID;DISPLAYNAME:en-US;DISPLAYNAME:de-DE
+entomologie;migreferenz;string;false;;1133;migration reference;Migrationsreferenz
+entomologie;source_reference;string;false;;1187;source_reference;source_reference
+;;;;;;;
+;;;;;;;
+### TABLE ENTOMOLOGIE_MEDIAASSETDELETED;;;;;;;
+ID;362;;;;;;
+NAME;entomologie_mediaassetdeleted;;;;;;
+POOL;;;;;;;
+HIERARCHICAL;;;;;;;
+TAGS;;;;;;;
+ACL;;;;;;;
+SEARCH;;;;;;;
+COMMENT;;;;;;;
+DISPLAYNAME:de-DE;Entomologie-Media Asset Deleted;;;;;;
+;;;;;;;
+;;;;;;;
+### COLUMNS;;;;;;;
+TABLE;NAME;TYPE;NOT_NULL;UNIQUE;ID;DISPLAYNAME:en-US;DISPLAYNAME:de-DE
+entomologie_mediaassetdeleted;entomologie;link:entomologie;false;;879;entomology;Entomologie
+entomologie_mediaassetdeleted;mediaassetdeleted;link:mediaasset;false;;880;media asset deleted;Media Asset Deleted
+entomologie_mediaassetdeleted;source_reference;string;false;;1193;source_reference;source_reference
+;;;;;;;
+;;;;;;;
+### TABLE ENTOMOLOGIE_MEDIAASSETNONPUBLIC;;;;;;;
+ID;361;;;;;;
+NAME;entomologie_mediaassetnonpublic;;;;;;
+POOL;;;;;;;
+HIERARCHICAL;;;;;;;
+TAGS;;;;;;;
+ACL;;;;;;;
+SEARCH;;;;;;;
+COMMENT;;;;;;;
+DISPLAYNAME:de-DE;Entomologie-Media Asset Non-Public;;;;;;
+;;;;;;;
+;;;;;;;
+### COLUMNS;;;;;;;
+TABLE;NAME;TYPE;NOT_NULL;UNIQUE;ID;DISPLAYNAME:en-US;DISPLAYNAME:de-DE
+entomologie_mediaassetnonpublic;entomologie;link:entomologie;false;;877;entomology;Entomologie
+entomologie_mediaassetnonpublic;mediaassetpublic;link:mediaasset;false;;878;media asset non public;Media Asset Non-Public
+entomologie_mediaassetnonpublic;source_reference;string;false;;1194;source_reference;source_reference
+;;;;;;;
+;;;;;;;
+### TABLE ENTOMOLOGIE_MEDIAASSETPUBLIC;;;;;;;
+ID;360;;;;;;
+NAME;entomologie_mediaassetpublic;;;;;;
+POOL;;;;;;;
+HIERARCHICAL;;;;;;;
+TAGS;;;;;;;
+ACL;;;;;;;
+SEARCH;;;;;;;
+COMMENT;;;;;;;
+DISPLAYNAME:de-DE;Entomologie-Media Asset Public;;;;;;
+;;;;;;;
+;;;;;;;
+### COLUMNS;;;;;;;
+TABLE;NAME;TYPE;NOT_NULL;UNIQUE;ID;DISPLAYNAME:en-US;DISPLAYNAME:de-DE
+entomologie_mediaassetpublic;entomologie;link:entomologie;false;;875;entomology;entomologie
+entomologie_mediaassetpublic;mediaassetpublic;link:mediaasset;false;;876;media asset public;Media Asset Public
+entomologie_mediaassetpublic;source_reference;string;false;;1195;source_reference;source_reference
+;;;;;;;
+;;;;;;;
+### TABLE FUNGARIUM;;;;;;;
+ID;180;;;;;;
+NAME;fungarium;;;;;;
+POOL;true;;;;;;
+HIERARCHICAL;;;;;;;
+TAGS;true;;;;;;
+ACL;;;;;;;
+SEARCH;true;;;;;;
+COMMENT;;;;;;;
+DISPLAYNAME:en-US;Fungarium;;;;;;
+DISPLAYNAME:de-DE;Fungarium;;;;;;
+;;;;;;;
+;;;;;;;
+### COLUMNS;;;;;;;
+TABLE;NAME;TYPE;NOT_NULL;UNIQUE;ID;DISPLAYNAME:de-DE;DISPLAYNAME:en-US
+fungarium;migreferenz;string;false;;1135;Migrationsreferenz;migration reference
+fungarium;source_reference;string;false;;1219;source_reference;source_reference
+;;;;;;;
+;;;;;;;
+### TABLE FUNGARIUM_MEDIAASSETDELETED;;;;;;;
+ID;365;;;;;;
+NAME;fungarium_mediaassetdeleted;;;;;;
+POOL;;;;;;;
+HIERARCHICAL;;;;;;;
+TAGS;;;;;;;
+ACL;;;;;;;
+SEARCH;;;;;;;
+COMMENT;;;;;;;
+DISPLAYNAME:de-DE;Fungarium-Media Asset Deleted;;;;;;
+;;;;;;;
+;;;;;;;
+### COLUMNS;;;;;;;
+TABLE;NAME;TYPE;NOT_NULL;UNIQUE;ID;DISPLAYNAME:en-US;DISPLAYNAME:de-DE
+fungarium_mediaassetdeleted;fungarium;link:fungarium;false;;885;fungarium;Fungarium
+fungarium_mediaassetdeleted;mediaassetdeleted;link:mediaasset;false;;886;media asset deleted;Media Asset Deleted
+fungarium_mediaassetdeleted;source_reference;string;false;;1226;source_reference;source_reference
+;;;;;;;
+;;;;;;;
+### TABLE FUNGARIUM_MEDIAASSETNONPUBLIC;;;;;;;
+ID;364;;;;;;
+NAME;fungarium_mediaassetnonpublic;;;;;;
+POOL;;;;;;;
+HIERARCHICAL;;;;;;;
+TAGS;;;;;;;
+ACL;;;;;;;
+SEARCH;;;;;;;
+COMMENT;;;;;;;
+DISPLAYNAME:de-DE;Fungarium-Media Asset Non-Public;;;;;;
+;;;;;;;
+;;;;;;;
+### COLUMNS;;;;;;;
+TABLE;NAME;TYPE;NOT_NULL;UNIQUE;ID;DISPLAYNAME:en-US;DISPLAYNAME:de-DE
+fungarium_mediaassetnonpublic;fungarium;link:fungarium;false;;883;fungarium;Fungarium
+fungarium_mediaassetnonpublic;mediaassetnonpublic;link:mediaasset;false;;884;media asset non public;Media Asset Non-Public
+fungarium_mediaassetnonpublic;source_reference;string;false;;1227;source_reference;source_reference
+;;;;;;;
+;;;;;;;
+### TABLE FUNGARIUM_MEDIAASSETPUBLIC;;;;;;;
+ID;363;;;;;;
+NAME;fungarium_mediaassetpublic;;;;;;
+POOL;;;;;;;
+HIERARCHICAL;;;;;;;
+TAGS;;;;;;;
+ACL;;;;;;;
+SEARCH;;;;;;;
+COMMENT;;;;;;;
+DISPLAYNAME:de-DE;Fungarium-Media Asset Public;;;;;;
+;;;;;;;
+;;;;;;;
+### COLUMNS;;;;;;;
+TABLE;NAME;TYPE;NOT_NULL;UNIQUE;ID;DISPLAYNAME:en-US;DISPLAYNAME:de-DE
+fungarium_mediaassetpublic;fungarium;link:fungarium;false;;881;fungarium;Fungarium
+fungarium_mediaassetpublic;mediaassetpublic;link:mediaasset;false;;882;media asset public;Media Asset Public
+fungarium_mediaassetpublic;source_reference;string;false;;1228;source_reference;source_reference
+;;;;;;;
+### TABLE HERBARIEN;;;;;;;
+ID;290;;;;;;
+NAME;herbarien;;;;;;
+POOL;true;;;;;;
+HIERARCHICAL;;;;;;;
+TAGS;true;;;;;;
+ACL;;;;;;;
+SEARCH;true;;;;;;
+COMMENT;;;;;;;
+DISPLAYNAME:en-US;Herbaria;;;;;;
+DISPLAYNAME:de-DE;Herbarien;;;;;;
+;;;;;;;
+;;;;;;;
+### COLUMNS;;;;;;;
+TABLE;NAME;TYPE;NOT_NULL;UNIQUE;ID;DISPLAYNAME:en-US;DISPLAYNAME:de-DE
+herbarien;barcode;string;false;;682;barcode;Barcode
+herbarien;migreferenz;string;false;;1136;migration reference;Migrationsreferenz
+herbarien;source_reference;string;false;;1246;source_reference;source_reference
+;;;;;;;
+;;;;;;;
+### TABLE HERBARIEN_MEDIAASSETDELETED;;;;;;;
+ID;371;;;;;;
+NAME;herbarien_mediaassetdeleted;;;;;;
+POOL;;;;;;;
+HIERARCHICAL;;;;;;;
+TAGS;;;;;;;
+ACL;;;;;;;
+SEARCH;;;;;;;
+COMMENT;;;;;;;
+DISPLAYNAME:de-DE;Herbarien-Media Asset Deleted;;;;;;
+;;;;;;;
+;;;;;;;
+### COLUMNS;;;;;;;
+TABLE;NAME;TYPE;NOT_NULL;UNIQUE;ID;DISPLAYNAME:en-US;DISPLAYNAME:de-DE
+herbarien_mediaassetdeleted;herbarien;link:herbarien;false;;897;united herbaria;Herbarien
+herbarien_mediaassetdeleted;mediaassetdeleted;link:mediaasset;false;;898;media asset deleted;Media Asset Deleted
+herbarien_mediaassetdeleted;source_reference;string;false;;1250;source_reference;source_reference
+;;;;;;;
+;;;;;;;
+### TABLE HERBARIEN_MEDIAASSETNONPUBLIC;;;;;;;
+ID;370;;;;;;
+NAME;herbarien_mediaassetnonpublic;;;;;;
+POOL;;;;;;;
+HIERARCHICAL;;;;;;;
+TAGS;;;;;;;
+ACL;;;;;;;
+SEARCH;;;;;;;
+COMMENT;;;;;;;
+DISPLAYNAME:de-DE;Herbarien-Media Asset Non-Public;;;;;;
+;;;;;;;
+;;;;;;;
+### COLUMNS;;;;;;;
+TABLE;NAME;TYPE;NOT_NULL;UNIQUE;ID;DISPLAYNAME:en-US;DISPLAYNAME:de-DE
+herbarien_mediaassetnonpublic;herbarien;link:herbarien;false;;895;united herbaria;Herbarien
+herbarien_mediaassetnonpublic;mediaassetnonpublic;link:mediaasset;false;;896;media asset non public;Media Asset Non-Public
+herbarien_mediaassetnonpublic;source_reference;string;false;;1251;source_reference;source_reference
+;;;;;;;
+;;;;;;;
+### TABLE HERBARIEN_MEDIAASSETPUBLIC;;;;;;;
+ID;369;;;;;;
+NAME;herbarien_mediaassetpublic;;;;;;
+POOL;;;;;;;
+HIERARCHICAL;;;;;;;
+TAGS;;;;;;;
+ACL;;;;;;;
+SEARCH;;;;;;;
+COMMENT;;;;;;;
+DISPLAYNAME:de-DE;Herbarien-Media Asset Public;;;;;;
+;;;;;;;
+;;;;;;;
+### COLUMNS;;;;;;;
+TABLE;NAME;TYPE;NOT_NULL;UNIQUE;ID;DISPLAYNAME:en-US;DISPLAYNAME:de-DE
+herbarien_mediaassetpublic;herbarien;link:herbarien;false;;893;united herbaria;Herbarien
+herbarien_mediaassetpublic;mediaassetpublic;link:mediaasset;false;;894;media asset public;Media Asset Public
+herbarien_mediaassetpublic;source_reference;string;false;;1252;source_reference;source_reference
+;;;;;;;
+;;;;;;;
+### TABLE MEDIAASSET;;;;;;;
+ID;77;;;;;;
+NAME;mediaasset;;;;;;
+POOL;true;;;;;;
+HIERARCHICAL;;;;;;;
+TAGS;true;;;;;;
+ACL;;;;;;;
+SEARCH;;;;;;;
+COMMENT;;;;;;;
+DISPLAYNAME:en-US;media asset;;;;;;
+DISPLAYNAME:de-DE;Media Asset;;;;;;
+;;;;;;;
+;;;;;;;
+### COLUMNS;;;;;;;
+TABLE;NAME;TYPE;NOT_NULL;UNIQUE;ID;DISPLAYNAME:en-US;DISPLAYNAME:de-DE
+mediaasset;barcode;string;false;;204;barcode;Barcode
+mediaasset;datei;eas;false;;205;file;Datei
+mediaasset;migreferenz;string;false;;1123;migration reference;Migrationreferenz
+mediaasset;source_reference;string;false;;1287;source_reference;source_reference
+;;;;;;;
+;;;;;;;
+;;;;;;;
+;;;;;;;
+### TABLE XYLOTHEK;;;;;;;
+ID;168;;;;;;
+NAME;xylothek;;;;;;
+POOL;true;;;;;;
+HIERARCHICAL;;;;;;;
+TAGS;true;;;;;;
+ACL;;;;;;;
+SEARCH;true;;;;;;
+COMMENT;;;;;;;
+DISPLAYNAME:en-US;Xylotheque;;;;;;
+DISPLAYNAME:de-DE;Xylothek;;;;;;
+;;;;;;;
+;;;;;;;
+### COLUMNS;;;;;;;
+TABLE;NAME;TYPE;NOT_NULL;UNIQUE;ID;DISPLAYNAME:en-US;DISPLAYNAME:de-DE
+xylothek;migreferenz;string;false;;1121;migration reference;Migrationsreferenz
+xylothek;source_reference;string;false;;1343;source_reference;source_reference
+;;;;;;;
+;;;;;;;
+;;;;;;;
+;;;;;;;
+### TABLE XYLOTHEK_MEDIAASSETDELETED;;;;;;;
+ID;359;;;;;;
+NAME;xylothek_mediaassetdeleted;;;;;;
+POOL;;;;;;;
+HIERARCHICAL;;;;;;;
+TAGS;;;;;;;
+ACL;;;;;;;
+SEARCH;;;;;;;
+COMMENT;;;;;;;
+DISPLAYNAME:de-DE;Xylothek-Media Asset Deleted;;;;;;
+;;;;;;;
+;;;;;;;
+### COLUMNS;;;;;;;
+TABLE;NAME;TYPE;NOT_NULL;UNIQUE;ID;DISPLAYNAME:en-US;DISPLAYNAME:de-DE
+xylothek_mediaassetdeleted;xylothek;link:xylothek;false;;873;wood collection;Xylothek
+xylothek_mediaassetdeleted;mediaassetdeleted;link:mediaasset;false;;874;media asset deleted;Media Asset Deleted
+xylothek_mediaassetdeleted;source_reference;string;false;;1349;source_reference;source_reference
+;;;;;;;
+;;;;;;;
+### TABLE XYLOTHEK_MEDIAASSETNONPUBLIC;;;;;;;
+ID;358;;;;;;
+NAME;xylothek_mediaassetnonpublic;;;;;;
+POOL;;;;;;;
+HIERARCHICAL;;;;;;;
+TAGS;;;;;;;
+ACL;;;;;;;
+SEARCH;;;;;;;
+COMMENT;;;;;;;
+DISPLAYNAME:de-DE;Xylothek-Media Asset Non-Public;;;;;;
+;;;;;;;
+;;;;;;;
+### COLUMNS;;;;;;;
+TABLE;NAME;TYPE;NOT_NULL;UNIQUE;ID;DISPLAYNAME:en-US;DISPLAYNAME:de-DE
+xylothek_mediaassetnonpublic;xylothek;link:xylothek;false;;871;wood collection;Xylothek
+xylothek_mediaassetnonpublic;mediaassetnonpublic;link:mediaasset;false;;872;media asset non public;Media Asset Non-Public
+xylothek_mediaassetnonpublic;source_reference;string;false;;1350;source_reference;source_reference
+;;;;;;;
+;;;;;;;
+### TABLE XYLOTHEK_MEDIAASSETPUBLIC;;;;;;;
+ID;357;;;;;;
+NAME;xylothek_mediaassetpublic;;;;;;
+POOL;;;;;;;
+HIERARCHICAL;;;;;;;
+TAGS;;;;;;;
+ACL;;;;;;;
+SEARCH;;;;;;;
+COMMENT;;;;;;;
+DISPLAYNAME:de-DE;Xylothek-Media Asset Public;;;;;;
+;;;;;;;
+;;;;;;;
+### COLUMNS;;;;;;;
+TABLE;NAME;TYPE;NOT_NULL;UNIQUE;ID;DISPLAYNAME:en-US;DISPLAYNAME:de-DE
+xylothek_mediaassetpublic;xylothek;link:xylothek;false;;869;wood collection;Xylothek
+xylothek_mediaassetpublic;mediaassetpublic;link:mediaasset;false;;870;media asset public;Media asset Public
+xylothek_mediaassetpublic;source_reference;string;false;;1351;source_reference;source_reference

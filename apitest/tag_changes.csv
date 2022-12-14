@@ -1,0 +1,26 @@
+skip,objecttype,ref,comment,tag_unclear,tag_redlist,mediaasset_public,mediaasset_nonpublic
+bool,string,string,string,bool,bool,"string,array","string,array"
+FALSE,fungarium,fung_1,no change in tags → no change in links,FALSE,FALSE,"ma_1,ma_2",
+FALSE,fungarium,fung_2,no change in tags → no change in links,FALSE,TRUE,,"ma_3,ma_4"
+FALSE,fungarium,fung_3,no linked mediaassets → ignore tag change,TRUE,TRUE,,
+FALSE,fungarium,fung_4,no linked mediaassets → ignore tag change,FALSE,FALSE,,
+FALSE,fungarium,fung_5,add tag → move from public to nonpublic,TRUE,FALSE,,"ma_5,ma_6"
+FALSE,fungarium,fung_6,remove tags → move from nonpublic to public,FALSE,FALSE,"ma_7,ma_8",
+FALSE,entomologie,ento_1,no change in tags → no change in links,FALSE,FALSE,"ma_9,ma_10",
+FALSE,entomologie,ento_2,no change in tags → no change in links,FALSE,TRUE,,"ma_11,ma_12"
+FALSE,entomologie,ento_3,no linked mediaassets → ignore tag change,TRUE,TRUE,,
+FALSE,entomologie,ento_4,no linked mediaassets → ignore tag change,FALSE,FALSE,,
+FALSE,entomologie,ento_5,add tag → move from public to nonpublic,TRUE,FALSE,,"ma_13,ma_14"
+FALSE,entomologie,ento_6,remove tags → move from nonpublic to public,FALSE,FALSE,"ma_15,ma_16",
+FALSE,herbarien,herb_1,no change in tags → no change in links,FALSE,FALSE,"ma_17,ma_18",
+FALSE,herbarien,herb_2,no change in tags → no change in links,FALSE,TRUE,,"ma_19,ma_20"
+FALSE,herbarien,herb_3,no linked mediaassets → ignore tag change,TRUE,TRUE,,
+FALSE,herbarien,herb_4,no linked mediaassets → ignore tag change,FALSE,FALSE,,
+FALSE,herbarien,herb_5,add tag → move from public to nonpublic,TRUE,FALSE,,"ma_21,ma_22"
+FALSE,herbarien,herb_6,remove tags → move from nonpublic to public,FALSE,FALSE,"ma_23,ma_24",
+FALSE,xylothek,xylo_1,no change in tags → no change in links,FALSE,FALSE,"ma_25,ma_26",
+FALSE,xylothek,xylo_2,no change in tags → no change in links,FALSE,TRUE,,"ma_27,ma_28"
+FALSE,xylothek,xylo_3,no linked mediaassets → ignore tag change,TRUE,TRUE,,
+FALSE,xylothek,xylo_4,no linked mediaassets → ignore tag change,FALSE,FALSE,,
+FALSE,xylothek,xylo_5,add tag → move from public to nonpublic,TRUE,FALSE,,"ma_29,ma_30"
+FALSE,xylothek,xylo_6,remove tags → move from nonpublic to public,FALSE,FALSE,"ma_31,ma_32",

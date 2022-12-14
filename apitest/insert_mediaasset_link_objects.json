@@ -1,0 +1,101 @@
+[
+    {{ range $idx, $row := file_csv `objects.csv` }}
+        {{ if $row.skip }} {{ continue }} {{ end }}
+        {{ if eq $row.objecttype `mediaasset` }} {{ continue }} {{ end }}
+
+        {{ range $idx2, $ma := $row.mediaasset_public }}
+            {
+                "name": "POST /api/v1/db/{{ $row.objecttype }}_mediaassetpublic: {{ $row.ref }}__{{ $ma }}",
+                "request": {
+                    "body": [
+                        {
+                            "_mask": "_all_fields",
+                            "_objecttype": "{{ $row.objecttype }}_mediaassetpublic",
+                            "{{ $row.objecttype }}_mediaassetpublic": {
+                                "_version": 1,
+                                {{ $row.objecttype | marshal }}: {
+                                    "_mask": "_all_fields",
+                                    "_objecttype": {{ $row.objecttype | marshal }},
+                                    {{ $row.objecttype | marshal }}: {
+                                        "lookup:_id": {
+                                            "migreferenz": {{ $row.ref | marshal }}
+                                        }
+                                    }
+                                },
+                                "mediaassetpublic": {
+                                    "_mask": "_all_fields",
+                                    "_objecttype": "mediaasset",
+                                    "mediaasset": {
+                                        "lookup:_id": {
+                                            "barcode": {{ $ma | marshal }}
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "endpoint": "db/{{ $row.objecttype }}_mediaassetpublic",
+                    "method": "POST",
+                    "header_from_store": {
+                        "x-easydb-token": "xEasyToken"
+                    }
+                },
+                "response": {
+                    "body": [],
+                    "statuscode": 200
+                },
+                "store_response_qjson": {
+                    "global_object_ids[]": "body.0._global_object_id"
+                }
+            },
+        {{ end }}
+
+        {{ range $idx2, $ma := $row.mediaasset_nonpublic }}
+            {
+                "name": "POST /api/v1/db/{{ $row.objecttype }}_mediaassetnonpublic: {{ $row.ref }}__{{ $ma }}",
+                "request": {
+                    "body": [
+                        {
+                            "_mask": "_all_fields",
+                            "_objecttype": "{{ $row.objecttype }}_mediaassetnonpublic",
+                            "{{ $row.objecttype }}_mediaassetnonpublic": {
+                                "_version": 1,
+                                {{ $row.objecttype | marshal }}: {
+                                    "_mask": "_all_fields",
+                                    "_objecttype": {{ $row.objecttype | marshal }},
+                                    {{ $row.objecttype | marshal }}: {
+                                        "lookup:_id": {
+                                            "migreferenz": {{ $row.ref | marshal }}
+                                        }
+                                    }
+                                },
+                                "mediaassetnonpublic": {
+                                    "_mask": "_all_fields",
+                                    "_objecttype": "mediaasset",
+                                    "mediaasset": {
+                                        "lookup:_id": {
+                                            "barcode": {{ $ma | marshal }}
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "endpoint": "db/{{ $row.objecttype }}_mediaassetnonpublic",
+                    "method": "POST",
+                    "header_from_store": {
+                        "x-easydb-token": "xEasyToken"
+                    }
+                },
+                "response": {
+                    "body": [],
+                    "statuscode": 200
+                },
+                "store_response_qjson": {
+                    "global_object_ids[]": "body.0._global_object_id"
+                }
+            },
+        {{ end }}
+
+    {{ end }}
+]

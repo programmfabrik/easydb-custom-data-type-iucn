@@ -1,0 +1,90 @@
+[
+    {{ range $idx, $row := file_csv `tag_changes.csv` }}
+        {{ if $row.skip }} {{ continue }} {{ end }}
+
+        // todo: search for main objects, check for the mediaassetpublic and mediaassetnonpublic arrays with linked objects
+
+        {
+            "name": "POST /api/v1/search: {{ $row.objecttype }}.migreferenz={{ $row.ref }}",
+            "request": {
+                "body": {
+                    "format": "long",
+                    "objecttypes": [
+                        "{{ $row.objecttype }}"
+                    ],
+                    "search": [
+                        {
+                            "bool": "must",
+                            "fields": [
+                                "{{ $row.objecttype }}.migreferenz"
+                            ],
+                            "in": [
+                                {{ trim $row.ref | marshal }}
+                            ],
+                            "type": "in"
+                        }
+                    ]
+                },
+                "endpoint": "search",
+                "method": "POST",
+                "header_from_store": {
+                    "x-easydb-token": "xEasyToken"
+                }
+            },
+            "response": {
+                "body": {
+                    "count": 1,
+                    "objects:control": {
+                        "no_extra": true
+                    },
+                    "objects": [
+                        {
+                            {{ $row.objecttype | marshal }}: {
+                                "migreferenz": {{ $row.ref | marshal }},
+
+                                {{ if gt ( $row.mediaasset_public | marshal | unmarshal | len ) 0 }}
+                                    "_reverse_nested:{{ $row.objecttype }}_mediaassetpublic:{{ $row.objecttype }}": [
+                                        {{ range $idx2, $ma := $row.mediaasset_public }}
+                                            {
+                                                "mediaassetpublic": {
+                                                    "mediaasset": {
+                                                        "_id": {{ trim $ma | printf "id_%s" | datastore }}
+                                                    }
+                                                }
+                                            },
+                                        {{ end }}
+                                    ],
+                                {{ else }}
+                                    "_reverse_nested:{{ $row.objecttype }}_mediaassetpublic:{{ $row.objecttype }}:control": {
+                                        "no_extra": true
+                                    },
+                                {{ end }}
+
+                                {{ if gt ( $row.mediaasset_nonpublic | marshal | unmarshal | len ) 0 }}
+                                    "_reverse_nested:{{ $row.objecttype }}_mediaassetnonpublic:{{ $row.objecttype }}": [
+                                        {{ range $idx2, $ma := $row.mediaasset_nonpublic }}
+                                            {
+                                                "mediaassetnonpublic": {
+                                                    "mediaasset": {
+                                                        "_id":  {{ trim $ma | printf "id_%s" | datastore }}
+                                                    }
+                                                }
+                                            },
+                                        {{ end }}
+                                    ],
+                                {{ else }}
+                                    "_reverse_nested:{{ $row.objecttype }}_mediaassetnonpublic:{{ $row.objecttype }}:control": {
+                                        "no_extra": true
+                                    },
+                                {{ end }}
+                            }
+                        }
+                    ]
+                },
+                "statuscode": 200
+            }
+            , "delay_ms": 1000
+            , "timeout_ms": 60000
+        },
+    {{ end }}
+]

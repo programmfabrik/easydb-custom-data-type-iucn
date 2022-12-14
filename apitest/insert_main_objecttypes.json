@@ -1,0 +1,64 @@
+[
+    {{ range $idx, $row := file_csv `objects.csv` }}
+        {{ if $row.skip }} {{ continue }} {{ end }}
+        {{ if eq $row.objecttype `mediaasset` }} {{ continue }} {{ end }}
+
+        {
+            "store": {
+                "ma_nonpublic_{{ $row.ref }}": [],
+                "ma_public_{{ $row.ref }}": []
+            }
+        },
+        {
+            "name": "POST /api/v1/db/{{ $row.objecttype }}: {{ $row.ref }}",
+            "request": {
+                "body": [
+                    {
+                        "_mask": "_all_fields",
+                        "_objecttype": {{ $row.objecttype | marshal }},
+                        {{ $row.objecttype | marshal }}: {
+                            "_pool": {
+                                "pool": {
+                                    "lookup:_id": {
+                                        "reference": "system:standard"
+                                    }
+                                }
+                            },
+                            "_version": 1,
+                            "migreferenz": {{ $row.ref | marshal }}
+                        },
+                        "_tags": [
+                            {{ if $row.tag_unclear }}
+                                {
+                                    "_id": {{ datastore "tag_id_iucn_unclear" }}
+                                },
+                            {{ end }}
+                            {{ if $row.tag_redlist }}
+                                {
+                                    "_id": {{ datastore "tag_id_iucn_redlist" }}
+                                },
+                            {{ end }}
+                        ]
+                    }
+                ],
+                "endpoint": "db/{{ $row.objecttype }}",
+                "method": "POST",
+                "query_params": {
+                    "format": "long"
+                },
+                "header_from_store": {
+                    "x-easydb-token": "xEasyToken"
+                }
+            },
+            "response": {
+                "body": [],
+                "statuscode": 200
+            },
+            "store_response_qjson": {
+                "global_object_ids[]": "body.0._global_object_id",
+                "sys_id_{{ $row.ref }}": "body.0._system_object_id",
+                "id_{{ $row.ref }}": "body.0.{{ $row.objecttype }}._id"
+            }
+        },
+    {{ end }}
+]

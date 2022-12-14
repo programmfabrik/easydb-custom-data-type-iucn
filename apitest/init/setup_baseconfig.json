@@ -1,0 +1,29 @@
+[
+    {
+        "name": "POST /api/v1/config",
+        "request": {
+            "body": {
+                "system": {
+                    "iucn_easydb_settings": {
+                        "easydb_login": "root",
+                        "easydb_password": "admin"
+                    },
+                    "iucn_settings": {
+                        "tag_red": {{ datastore "tag_id_iucn_redlist" }},
+                        "tag_unclear": {{ datastore "tag_id_iucn_unclear" }}
+                    }
+                }
+            },
+            "endpoint": "config",
+            "method": "POST",
+            "header_from_store": {
+                "x-easydb-token": "xEasyToken"
+            }
+        },
+        "response": {
+            "body": {},
+            "statuscode": 200
+        },
+        "store_response_qjson": {}
+    }
+]

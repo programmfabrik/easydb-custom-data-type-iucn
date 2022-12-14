@@ -17,6 +17,9 @@ plugin:
     logo: image/logo.png
     l10n: l10n/
 
+python-2:
+  file: src/server/main.py
+
 custom_types:
   iucn:
     update:

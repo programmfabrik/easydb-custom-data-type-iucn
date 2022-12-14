@@ -1,0 +1,20 @@
+[
+    {
+        "name": "GET /api/settings",
+        "request": {
+            "header": {
+                "Authorization": ""
+            },
+            "endpoint": "settings",
+            "method": "GET"
+        },
+        "response": {
+            "statuscode": 200
+        },
+        "store_response_qjson": {
+            "settings.version": "body.version"
+        },
+        "delay_ms": 500,
+        "timeout_ms": 5000
+    }
+]

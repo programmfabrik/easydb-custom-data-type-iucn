@@ -1,0 +1,90 @@
+[
+    {
+        "name": "upload schema",
+        "request": {
+            {{ if le (semver_compare (datastore "settings.version") "v6.0.0") 0 }}
+                "header_from_store": {
+                    "x-easydb-token": "xEasyToken"
+                },
+            {{ end }}
+            "endpoint": "schema/user/HEAD",
+            "method": "POST",
+            "body": {{ file "datamodel.json" | qjson "schema" }}
+        },
+        "response": {
+            "statuscode": 200
+        }
+    },
+    {
+        "name": "upload mask",
+        "request": {
+            {{ if le (semver_compare (datastore "settings.version") "v6.0.0") 0 }}
+                "header_from_store": {
+                    "x-easydb-token": "xEasyToken"
+                },
+            {{ end }}
+            "endpoint": "mask/HEAD",
+            "method": "POST",
+            "body": {{ file "datamodel.json" | qjson "mask" }}
+        },
+        "response": {
+            "statuscode": 200
+        }
+    },
+    {
+        "name": "upload keys",
+        "request": {
+            {{ if le (semver_compare (datastore "settings.version") "v6.0.0") 0 }}
+                "header_from_store": {
+                    "x-easydb-token": "xEasyToken"
+                },
+            {{ end }}
+            "endpoint": "l10n/user/HEAD",
+            "method": "POST",
+            "body": {{ file "datamodel.json" | qjson "keys" }}
+        },
+        "response": {
+            "statuscode": 200
+        }
+    },
+    {
+        "name": "commit schema",
+        "request": {
+            {{ if le (semver_compare (datastore "settings.version") "v6.0.0") 0 }}
+                "header_from_store": {
+                    "x-easydb-token": "xEasyToken"
+                },
+            {{ end }}
+            "endpoint": "schema/commit",
+            "query_params": {
+                "reindex_generate_events": 1,
+                "confirm": "yes" // fylr needs this
+            },
+            "method": "POST"
+        },
+        "response": {
+            "statuscode": 200
+        },
+        "wait_after_ms": 2000
+    },
+    {{ if le 0 (semver_compare (datastore "settings.version") "v6.0.0") }}
+        {
+            "name": "reindex...",
+            "request": {
+                "header_from_store": {
+                    "x-easydb-token": "xEasyToken"
+                },
+                "endpoint": "system/reindex",
+                "method": "POST"
+            }
+        }
+    {{ else }}
+        {
+            "name": "settings request to wait for completion of commit",
+            "request": {
+                "endpoint": "settings",
+                "method": "GET"
+            }
+        }
+    {{ end }}
+]

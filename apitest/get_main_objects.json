@@ -1,0 +1,27 @@
+[
+    {{ range $idx, $row := file_csv `objects.csv` }}
+        {{ if $row.skip }} {{ continue }} {{ end }}
+        {{ if eq $row.objecttype `mediaasset` }} {{ continue }} {{ end }}
+
+        {
+            "name": "GET /api/v1/db/{{ $row.objecttype }}/_all_fields/system_object_id/{{ $row.ref | printf "sys_id_%s" | datastore }}",
+            "request": {
+                "endpoint": "db/{{ $row.objecttype }}/_all_fields/system_object_id/{{ $row.ref | printf "sys_id_%s" | datastore }}",
+                "method": "GET",
+                "query_params": {
+                    "format": "long"
+                },
+                "header_from_store": {
+                    "x-easydb-token": "xEasyToken"
+                }
+            },
+            "response": {
+                "statuscode": 200
+            },
+            "store_response_qjson": {
+                "ma_nonpublic_{{ $row.ref }}": "body.0.{{ $row.objecttype }}._reverse_nested:{{ $row.objecttype }}_mediaassetnonpublic:{{ $row.objecttype }}",
+                "ma_public_{{ $row.ref }}": "body.0.{{ $row.objecttype }}._reverse_nested:{{ $row.objecttype }}_mediaassetpublic:{{ $row.objecttype }}"
+            }
+        },
+    {{ end }}
+]

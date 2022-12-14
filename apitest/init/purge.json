@@ -1,0 +1,46 @@
+[
+    {{ if le 0 (semver_compare (datastore "settings.version") "v6.0.0") }}
+        {
+            "name": "purge 6...",
+            "request": {
+                "header_from_store": {
+                    "Authorization": "token_root"
+                },
+                "endpoint": "system/purgeall",
+                "method": "POST"
+            }
+        }
+    {{ else }}
+        {
+            "name": "purge 5...",
+            "request": {
+                "header_from_store": {
+                    "x-easydb-token": "xEasyToken"
+                },
+                "endpoint": "settings/purgeall",
+                "method": "POST"
+            },
+            "response": {
+                "statuscode": 500
+            }
+        },
+        {
+            "name": "wait for the purge to finish",
+            "request": {
+                "header": {
+                    "x-easydb-token": "xEasyToken"
+                },
+                "endpoint": "session",
+                "method": "GET"
+            },
+            "response": {
+                "statuscode": 400,
+                "body": {
+                    "code": "error.user.session_not_found"
+                }
+            },
+            "timeout_ms": 300000,
+            "delay_ms": 1000
+        }
+    {{ end }}
+]

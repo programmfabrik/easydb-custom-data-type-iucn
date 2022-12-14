@@ -1,0 +1,83 @@
+[
+    {{ range $idx, $row := file_csv `tag_changes.csv` }}
+        {{ if $row.skip }} {{ continue }} {{ end }}
+        {
+            "name": "POST /api/v1/db/{{ $row.objecttype }}: update {{ $row.ref }}: {{ $row.comment }}",
+            "request": {
+                "body": [
+                    {
+                        "_mask": "_all_fields",
+                        "_objecttype": {{ $row.objecttype | marshal }},
+                        {{ $row.objecttype | marshal }}: {
+                            "_pool": {
+                                "pool": {
+                                    "lookup:_id": {
+                                        "reference": "system:standard"
+                                    }
+                                }
+                            },
+                            "lookup:_id": {
+                                "migreferenz": {{ $row.ref | marshal }}
+                            },
+                            "_version": 2,
+                            "migreferenz": {{ $row.ref | marshal }},
+                            "_reverse_nested:{{ $row.objecttype }}_mediaassetnonpublic:{{ $row.objecttype }}": {{ $row.ref | printf "ma_nonpublic_%s" | datastore | marshal }},
+                            "_reverse_nested:{{ $row.objecttype }}_mediaassetpublic:{{ $row.objecttype }}": {{ $row.ref | printf "ma_public_%s" | datastore | marshal }}
+                        },
+                        "_tags": [
+                            {{ if $row.tag_unclear }}
+                                {
+                                    "_id": {{ datastore "tag_id_iucn_unclear" }}
+                                },
+                            {{ end }}
+                            {{ if $row.tag_redlist }}
+                                {
+                                    "_id": {{ datastore "tag_id_iucn_redlist" }}
+                                },
+                            {{ end }}
+                        ]
+                    }
+                ],
+                "endpoint": "db/{{ $row.objecttype }}",
+                "method": "POST",
+                "query_params": {
+                    "format": "long"
+                },
+                "header_from_store": {
+                    "x-easydb-token": "xEasyToken"
+                }
+            },
+            "response": {
+                "body": [
+                    {
+                        // {{ $row.objecttype | marshal }}: {
+                        //     "migreferenz": {{ $row.ref | marshal }},
+                        //     {{ if gt ( $row.ref | printf "ma_nonpublic_%s" | datastore | len ) 0 }}
+                        //         "_reverse_nested:{{ $row.objecttype }}_mediaassetnonpublic:{{ $row.objecttype }}": {{ $row.ref | printf "ma_nonpublic_%s" | datastore | marshal }},
+                        //     {{ end }}
+                        //     {{ if gt ( $row.ref | printf "ma_public_%s" | datastore | len ) 0 }}
+                        //         "_reverse_nested:{{ $row.objecttype }}_mediaassetpublic:{{ $row.objecttype }}": {{ $row.ref | printf "ma_public_%s" | datastore | marshal }}
+                        //     {{ end }}
+                        // },
+                        "_tags": [
+                            {{ if $row.tag_unclear }}
+                                {
+                                    "_id": {{ datastore "tag_id_iucn_unclear" }}
+                                },
+                            {{ end }}
+                            {{ if $row.tag_redlist }}
+                                {
+                                    "_id": {{ datastore "tag_id_iucn_redlist" }}
+                                },
+                            {{ end }}
+                        ]
+                    }
+                ],
+                "statuscode": 200
+            },
+            "store_response_qjson": {
+                "global_object_ids[]": "body.0._global_object_id"
+            }
+        },
+    {{ end }}
+]
