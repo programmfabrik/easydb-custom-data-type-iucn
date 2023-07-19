@@ -3,8 +3,8 @@ plugin:
   version: 1.0
   url: https://github.com/programmfabrik/easydb-custom-data-type-iucn
   displayname:
-    de-DE: IUCN
-    en-US: IUCN
+    en-US: "Custom Data Type: IUCN"
+    de-DE: "Custom Data Type: IUCN"
   info:
     de-DE: IUCN
     en-US: IUCN
