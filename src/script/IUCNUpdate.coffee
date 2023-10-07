@@ -162,11 +162,9 @@ class IUCNUpdate
 					continue
 				foundData = ez5.IUCNUtil.setObjectData({}, objectsFound)
 				for object in objectsByNameMap[scientificName]
-					object.data.__found = true
 					object.data = ez5.IUCNUtil.getSaveData(foundData)
-					# Object is updated now. Next time that the script is executed with this object
-					# the tags of the top level object will be updated.
 					object.data.__updateTags = true
+					objectsToUpdateTags.push(object)
 					objectsToUpdate.push(object)
 
 			for id in Object.keys(objectsByIdMap)
@@ -175,19 +173,11 @@ class IUCNUpdate
 					continue
 				foundData = ez5.IUCNUtil.setObjectData({}, objectFound)
 				for object in objectsByIdMap[id]
-					if ez5.IUCNUtil.isEqual(object.data, foundData)
-						object.data.__found = true
-						# If the data did not change since the last time it was checked, and the __updateTags is true.
-						# __updateTags will be undefined when the object is updated but it was never updated here before.
-						if CUI.util.isUndef(object.data.__updateTags) or object.data.__updateTags
-							object.data.__updateTags = false
-							objectsToUpdateTags.push(object)
-							objectsToUpdate.push(object)
-					else
-						object.data = ez5.IUCNUtil.getSaveData(foundData)
-						object.data.__found = true
+					object.data = ez5.IUCNUtil.getSaveData(foundData)
+					if not !!object.data.__updateTags
 						object.data.__updateTags = true
-						objectsToUpdate.push(object)
+						objectsToUpdateTags.push(object)
+					objectsToUpdate.push(object)
 
 
 			# If any of the given objects are not in the update array then it means that they were not found in the IUCN API.
