@@ -7,6 +7,7 @@ class IUCNUpdate
 		return easydb_api_url
 
 	__startUpdate: (data) ->
+
 		@__login(data).done((easydbToken, easydbUrl) =>
 			if not easydbToken
 				ez5.respondError("custom.data.type.iucn.start-update.error.easydb-token-empty")
@@ -125,12 +126,14 @@ class IUCNUpdate
 
 		objectsToUpdate = []
 		objectsToUpdateTags = []
+		objectsNotFound = []
 
 		speciesByName = {}
 		speciesById = {}
 
 		deferred = new CUI.Deferred()
 		ez5.IUCNUtil.fetchAllSpecies(apiSettings).done((response) =>
+
 			# The response of the API returns 200 - 'message': "Token not valid!" when the token is not valid.
 			# For now we will be using this to check it.
 			if not response
@@ -159,6 +162,7 @@ class IUCNUpdate
 					continue
 				foundData = ez5.IUCNUtil.setObjectData({}, objectsFound)
 				for object in objectsByNameMap[scientificName]
+					object.data.__found = true
 					object.data = ez5.IUCNUtil.getSaveData(foundData)
 					# Object is updated now. Next time that the script is executed with this object
 					# the tags of the top level object will be updated.
@@ -172,6 +176,7 @@ class IUCNUpdate
 				foundData = ez5.IUCNUtil.setObjectData({}, objectFound)
 				for object in objectsByIdMap[id]
 					if ez5.IUCNUtil.isEqual(object.data, foundData)
+						object.data.__found = true
 						# If the data did not change since the last time it was checked, and the __updateTags is true.
 						# __updateTags will be undefined when the object is updated but it was never updated here before.
 						if CUI.util.isUndef(object.data.__updateTags) or object.data.__updateTags
@@ -180,8 +185,22 @@ class IUCNUpdate
 							objectsToUpdate.push(object)
 					else
 						object.data = ez5.IUCNUtil.getSaveData(foundData)
+						object.data.__found = true
 						object.data.__updateTags = true
 						objectsToUpdate.push(object)
+
+
+			# If any of the given objects are not in the update array then it means that they were not found in the IUCN API.
+			# We need to clear the tags of objects linking to those objects.
+			objectsNotFound = data.objects.filter((object) ->
+				not objectsToUpdate.find((objectToUpdate) -> objectToUpdate.identifier == object.identifier)
+			)
+
+			for objectNotFound in objectsNotFound
+				objectNotFound.redList = false
+				objectNotFound.unclear = false
+				objectsToUpdate.push(objectNotFound)
+				objectsToUpdateTags.push(objectNotFound)
 
 			@__updateTags(objectsToUpdateTags, data).done(=>
 				response = payload: objectsToUpdate
@@ -315,6 +334,7 @@ class IUCNUpdate
 								headers:
 									'x-easydb-token': easydbToken
 								body: body
+
 							xhrUpdateTags = new CUI.XHR(updateTagsOpts)
 							updateTagsPromise = xhrUpdateTags.start().fail((e) =>
 								deferred.reject("custom.data.type.iucn.update.error.update-tags",
