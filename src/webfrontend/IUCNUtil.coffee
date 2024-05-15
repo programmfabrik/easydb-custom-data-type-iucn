@@ -2,7 +2,6 @@ class ez5.IUCNUtil
 
 	@ENDPOINT_SPECIES = "/species/"
 	@ENDPOINT_SPECIES_ID = "/species/id/"
-	@ENDPOINT_SPECIES_PAGE = "/species/page/"
 	@LINK_FIELD_SEPARATOR = ":__link:" # The link separator is used to separate iucn fields from their linked fields.
 
 	@getFieldType: ->
@@ -20,28 +19,6 @@ class ez5.IUCNUtil
 		url = apiSettings.api_url + ez5.IUCNUtil.ENDPOINT_SPECIES_ID + id + "?token=" + apiSettings.api_token
 		return ez5.IUCNUtil.get(url)
 
-	@fetchAllSpecies: (apiSettings) ->
-		if not apiSettings
-			apiSettings = ez5.IUCNUtil.getApiSettings()
-
-		data = objects: []
-		deferred = new CUI.Deferred()
-		fetchPage = (page = 0) ->
-			url = apiSettings.api_url + ez5.IUCNUtil.ENDPOINT_SPECIES_PAGE + page + "?token=" + apiSettings.api_token
-			ez5.IUCNUtil.get(url).done((response) =>
-				if not response or response.message
-					return deferred.resolve(response)
-
-				if response.count > 0
-					data.objects = data.objects.concat(response.result)
-					page++
-					fetchPage(page)
-				else
-					deferred.resolve(data)
-			).fail(deferred.reject)
-		fetchPage()
-		return deferred.promise()
-
 	@get: (url) ->
 		xhr = new CUI.XHR
 			method: "GET"
@@ -55,24 +32,18 @@ class ez5.IUCNUtil
 			delete object.mainCommonName
 			delete object.category
 			delete object.redList
-			delete object.unclear
 			return
 
-		# TODO: Check this, by default both are not unclear or redlist.
-		object.unclear = false
 		object.redList = false
 
 		if CUI.util.isArray(data)
-			if data.length > 1 # When there is more than 1 result it means that the status is unclear.
-				object.unclear = true
 			data = data[0]
 
 		if not data.taxonid # Not found
 			object.scientificName = data.scientific_name
 			return object
 
-		if not object.unclear
-			object.redList = data.category in ["EX", "EW", "CR", "EN", "VU"]
+		object.redList = data.category in ["EX", "EW", "CR", "EN", "VU"]
 
 		object.idTaxon = "#{data.taxonid}"
 		object.scientificName = data.scientific_name or ""
@@ -81,7 +52,7 @@ class ez5.IUCNUtil
 		return object
 
 	@isEqual: (objectOne, objectTwo) ->
-		for key in ["idTaxon", "scientificName", "mainCommonName", "category", "redList", "unclear"]
+		for key in ["idTaxon", "scientificName", "mainCommonName", "category", "redList"]
 			if not CUI.util.isEqual(objectOne[key], objectTwo[key])
 				return false
 		return true
@@ -93,7 +64,6 @@ class ez5.IUCNUtil
 			mainCommonName: data.mainCommonName
 			category: data.category
 			redList: data.redList
-			unclear: data.unclear
 			_fulltext:
 				text: "#{data.scientificName} #{data.mainCommonName}"
 				string: "#{data.idTaxon}"
