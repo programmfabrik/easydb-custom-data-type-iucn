@@ -67,10 +67,6 @@ base_config:
         type: int
         position: 0
         plugin_type: "iucn_tag"
-      tag_unclear:
-        type: int
-        position: 1
-        plugin_type: "iucn_tag"
       iucn_fields:
         type: table
         position: 2

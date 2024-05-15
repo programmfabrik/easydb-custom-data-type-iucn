@@ -153,8 +153,6 @@ class CustomDataTypeIUCN extends CustomDataType
 	__getOutput: (data, isEditor = false, onDelete) ->
 		if data.redList
 			statusText = $$("custom.data.type.iucn.output.status.red-list.text")
-		else if data.unclear
-			statusText = $$("custom.data.type.iucn.output.status.unclear.text")
 		else
 			statusText = $$("custom.data.type.iucn.output.no-status.text")
 

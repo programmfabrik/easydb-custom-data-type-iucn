@@ -128,94 +128,6 @@ class IUCNUpdate
 		objectsToUpdateTags = []
 		objectsNotFound = []
 
-		speciesByName = {}
-		speciesById = {}
-
-		deferred = new CUI.Deferred()
-		ez5.IUCNUtil.fetchAllSpecies(apiSettings).done((response) =>
-
-			# The response of the API returns 200 - 'message': "Token not valid!" when the token is not valid.
-			# For now we will be using this to check it.
-			if not response
-				_data = iucn_api_settings: apiSettings
-				ez5.respondError("custom.data.type.iucn.update.error.iucn-api-empty-response", data: _data)
-				return deferred.reject()
-			if response.message == "Token not valid!"
-				_data =
-					iucn_api_settings: apiSettings
-					response: response
-				ez5.respondError("custom.data.type.iucn.update.error.iucn-api-token-not-valid", data: _data)
-				return deferred.reject()
-
-			# Save objects in two maps to be able to quickly access by id and by scientific name.
-			for object in response.objects
-				speciesById[object.taxonid] = object
-				# It can be the case where more than one result share the same scientific name,
-				# so we have to keep track of that because it means that the state is 'unclear'
-				if not speciesByName[object.scientific_name]
-					speciesByName[object.scientific_name] = []
-				speciesByName[object.scientific_name].push(object)
-
-			for scientificName in Object.keys(objectsByNameMap)
-				objectsFound = speciesByName[scientificName]
-				if CUI.util.isEmpty(objectsFound)
-					continue
-				foundData = ez5.IUCNUtil.setObjectData({}, objectsFound)
-				for object in objectsByNameMap[scientificName]
-					object.data = ez5.IUCNUtil.getSaveData(foundData)
-					object.data.__updateTags = true
-					objectsToUpdateTags.push(object)
-					objectsToUpdate.push(object)
-
-			for id in Object.keys(objectsByIdMap)
-				objectFound = speciesById[id]
-				if CUI.util.isEmpty(objectFound)
-					continue
-				foundData = ez5.IUCNUtil.setObjectData({}, objectFound)
-				for object in objectsByIdMap[id]
-					object.data = ez5.IUCNUtil.getSaveData(foundData)
-					if not !!object.data.__updateTags
-						object.data.__updateTags = true
-						objectsToUpdateTags.push(object)
-					objectsToUpdate.push(object)
-
-
-			# If any of the given objects are not in the update array then it means that they were not found in the IUCN API.
-			# We need to clear the tags of objects linking to those objects.
-			objectsNotFound = data.objects.filter((object) ->
-				not objectsToUpdate.find((objectToUpdate) -> objectToUpdate.identifier == object.identifier)
-			)
-
-			for objectNotFound in objectsNotFound
-				objectNotFound.redList = false
-				objectNotFound.unclear = false
-				objectsToUpdate.push(objectNotFound)
-				objectsToUpdateTags.push(objectNotFound)
-
-			@__updateTags(objectsToUpdateTags, data).done(=>
-				response = payload: objectsToUpdate
-				if data.batch_info and data.batch_info.offset + data.objects.length >= data.batch_info.total
-					easydbUrl = @__getEasydbUrl(easydbApiUrl)
-					xhr = new CUI.XHR
-						method: "POST"
-						url: "#{easydbUrl}/session/deauthenticate"
-					xhr.start().always(=>
-						ez5.respondSuccess(response)
-					)
-				else
-					ez5.respondSuccess(response)
-			).fail((messageKey, opts = {}) =>
-				ez5.respondError(messageKey, opts)
-			)
-		).fail((responseError) =>
-			_data =
-				errorData: responseError.data
-				apiCall: ez5.IUCNUtil.ENDPOINT_SPECIES_PAGE
-				apiSettings: apiSettings
-			ez5.respondError("custom.data.type.iucn.update.error.iucn-api-call", data: _data, responseError.status)
-			return deferred.reject()
-		)
-		return deferred.promise()
 
 	__updateTags: (objects, data) ->
 		if objects.length == 0
@@ -225,10 +137,9 @@ class IUCNUpdate
 		iucnSettings = data.state.config.iucn_settings
 
 		idTagRed = iucnSettings.tag_red
-		idTagUnclear = iucnSettings.tag_unclear
 		iucnFields = iucnSettings.iucn_fields
 
-		if not iucnFields or not idTagRed or not idTagUnclear
+		if not iucnFields or not idTagRed
 			return CUI.rejectedPromise("custom.data.type.iucn.update.error.not-available-settings")
 
 		easydbToken = data.state.easydbToken
@@ -280,19 +191,12 @@ class IUCNUpdate
 
 					if item.data.redList
 						addTagBody._tags.push(_id: idTagRed)
-						removeTagBody._tags.push(_id: idTagUnclear)
-					else if item.data.unclear
-						addTagBody._tags.push(_id: idTagUnclear)
-						removeTagBody._tags.push(_id: idTagRed)
 					else
 						removeTagBody._tags.push(_id: idTagRed)
-						removeTagBody._tags.push(_id: idTagUnclear)
 						addTagBody = null
-					#
 
 					# Update tags of objects.
-					# When the item is in the red list, it adds the red list tag and removes unclear tag.
-					# When the item is unclear, it adds the unclear tag and removes red list tag.
+					# When the item is in the red list, it adds the red list tag.
 					# Otherwise, it removes all tags.
 					update = (objects) ->
 						idObjectsByObjecttype = {}
