@@ -150,8 +150,6 @@ class IUCNUpdate
 			# Save objects in two maps to be able to quickly access by id and by scientific name.
 			for object in response.objects
 				speciesById[object.taxonid] = object
-				# It can be the case where more than one result share the same scientific name,
-				# so we have to keep track of that because it means that the state is 'unclear'
 				if not speciesByName[object.scientific_name]
 					speciesByName[object.scientific_name] = []
 				speciesByName[object.scientific_name].push(object)
@@ -188,7 +186,6 @@ class IUCNUpdate
 
 			for objectNotFound in objectsNotFound
 				objectNotFound.redList = false
-				objectNotFound.unclear = false
 				objectsToUpdate.push(objectNotFound)
 				objectsToUpdateTags.push(objectNotFound)
 
@@ -225,10 +222,9 @@ class IUCNUpdate
 		iucnSettings = data.state.config.iucn_settings
 
 		idTagRed = iucnSettings.tag_red
-		idTagUnclear = iucnSettings.tag_unclear
 		iucnFields = iucnSettings.iucn_fields
 
-		if not iucnFields or not idTagRed or not idTagUnclear
+		if not iucnFields or not idTagRed
 			return CUI.rejectedPromise("custom.data.type.iucn.update.error.not-available-settings")
 
 		easydbToken = data.state.easydbToken
@@ -280,19 +276,14 @@ class IUCNUpdate
 
 					if item.data.redList
 						addTagBody._tags.push(_id: idTagRed)
-						removeTagBody._tags.push(_id: idTagUnclear)
-					else if item.data.unclear
-						addTagBody._tags.push(_id: idTagUnclear)
-						removeTagBody._tags.push(_id: idTagRed)
+						removeTagBody = null
 					else
 						removeTagBody._tags.push(_id: idTagRed)
-						removeTagBody._tags.push(_id: idTagUnclear)
 						addTagBody = null
 					#
 
 					# Update tags of objects.
-					# When the item is in the red list, it adds the red list tag and removes unclear tag.
-					# When the item is unclear, it adds the unclear tag and removes red list tag.
+					# When the item is in the red list, it adds the red list tag.
 					# Otherwise, it removes all tags.
 					update = (objects) ->
 						idObjectsByObjecttype = {}

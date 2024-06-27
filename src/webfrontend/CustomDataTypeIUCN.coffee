@@ -99,17 +99,44 @@ class CustomDataTypeIUCN extends CustomDataType
 	__getSearchField: (data, onSearch) ->
 		doSearch = =>
 			searchButton.startSpinner()
-			ez5.IUCNUtil.searchBySpecies(data.searchName).done((response) ->
-				if not response or response.message == "Token not valid!"
-					CUI.alert(text: $$("custom.data.type.iucn.editor.search.token-invalid"), markdown: true)
-					return
-				_data = response.result
-				if CUI.util.isEmpty(_data)
-					ez5.IUCNUtil.setObjectData(data, scientific_name: data.searchName)
-				else
-					ez5.IUCNUtil.setObjectData(data, _data)
-				onSearch()
-			).always(-> searchButton.stopSpinner())
+
+			if isNaN(data.searchName)
+				# if the search input is not numerical, use it as a scientific name
+				# endpoint needs genus and species so treat the input as a latin binomial
+				# split at whitespace, use first part as genus and second (if any) as species name
+				parts = data.searchName.split(/\s+/).filter (part) -> part.trim() != ""
+				genus = ""
+				species = ""
+				if parts.length > 0
+					genus = parts[0]
+				if parts.length > 1
+					species = parts[1]
+
+				ez5.IUCNUtil.searchByTaxonname(genus, species).done((response) ->
+					if not response
+						CUI.alert(text: $$("custom.data.type.iucn.editor.search.token-invalid"), markdown: true)
+						return
+					_data = response.result
+					if CUI.util.isEmpty(_data)
+						ez5.IUCNUtil.setObjectData(data, scientific_name: data.searchName)
+					else
+						ez5.IUCNUtil.setObjectData(data, _data)
+					onSearch()
+				).always(-> searchButton.stopSpinner())
+
+			else
+				# if there are only numbers in the search input, it could be a taxon id
+				ez5.IUCNUtil.searchBySisTaxonId(data.searchName).done((response) ->
+					if not response
+						CUI.alert(text: $$("custom.data.type.iucn.editor.search.token-invalid"), markdown: true)
+						return
+					_data = response.result
+					if CUI.util.isEmpty(_data)
+						ez5.IUCNUtil.setObjectData(data, scientific_name: data.searchName)
+					else
+						ez5.IUCNUtil.setObjectData(data, _data)
+					onSearch()
+				).always(-> searchButton.stopSpinner())
 
 		searchButton = new CUI.Button
 			icon: "search"
@@ -153,8 +180,6 @@ class CustomDataTypeIUCN extends CustomDataType
 	__getOutput: (data, isEditor = false, onDelete) ->
 		if data.redList
 			statusText = $$("custom.data.type.iucn.output.status.red-list.text")
-		else if data.unclear
-			statusText = $$("custom.data.type.iucn.output.status.unclear.text")
 		else
 			statusText = $$("custom.data.type.iucn.output.no-status.text")
 

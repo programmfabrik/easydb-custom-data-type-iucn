@@ -1,25 +1,35 @@
 class ez5.IUCNUtil
 
-	@ENDPOINT_SPECIES = "/species/"
-	@ENDPOINT_SPECIES_ID = "/species/id/"
+	# xxx remove
 	@ENDPOINT_SPECIES_PAGE = "/species/page/"
+
 	@LINK_FIELD_SEPARATOR = ":__link:" # The link separator is used to separate iucn fields from their linked fields.
 
 	@getFieldType: ->
 		return "custom:base.custom-data-type-iucn.iucn"
 
-	@searchBySpecies: (species, apiSettings) ->
+	@getAssessmentData: (assessment_id, apiSettings) ->
 		if not apiSettings
 			apiSettings = ez5.IUCNUtil.getApiSettings()
-		url = apiSettings.api_url + ez5.IUCNUtil.ENDPOINT_SPECIES + encodeURIComponent(species) + "?token=" + apiSettings.api_token
-		return ez5.IUCNUtil.get(url)
+		url = apiSettings.api_url + "/assessment/" + assessment_id
+		# console.debug "getAssessmentData",assessment_id,"=>",url
+		return ez5.IUCNUtil.get(url, apiSettings.api_token)
 
-	@searchBySpeciesId: (id, apiSettings) ->
+	@searchByTaxonname: (genus, species, apiSettings) ->
 		if not apiSettings
 			apiSettings = ez5.IUCNUtil.getApiSettings()
-		url = apiSettings.api_url + ez5.IUCNUtil.ENDPOINT_SPECIES_ID + id + "?token=" + apiSettings.api_token
-		return ez5.IUCNUtil.get(url)
+		url = apiSettings.api_url + "/taxa/scientific_name?genus_name=" + encodeURIComponent(genus) + "&species_name=" + encodeURIComponent(species)
+		# console.debug "searchByTaxonname",genus,species,"=>",url
+		return ez5.IUCNUtil.get(url, apiSettings.api_token)
 
+	@searchBySisTaxonId: (sis_taxon_id, apiSettings) ->
+		if not apiSettings
+			apiSettings = ez5.IUCNUtil.getApiSettings()
+		url = apiSettings.api_url + "/taxa/sis/" + sis_taxon_id
+		# console.debug "searchBySisTaxonId",sis_taxon_id,"=>",url
+		return ez5.IUCNUtil.get(url, apiSettings.api_token)
+
+	# xxx remove
 	@fetchAllSpecies: (apiSettings) ->
 		if not apiSettings
 			apiSettings = ez5.IUCNUtil.getApiSettings()
@@ -27,8 +37,8 @@ class ez5.IUCNUtil
 		data = objects: []
 		deferred = new CUI.Deferred()
 		fetchPage = (page = 0) ->
-			url = apiSettings.api_url + ez5.IUCNUtil.ENDPOINT_SPECIES_PAGE + page + "?token=" + apiSettings.api_token
-			ez5.IUCNUtil.get(url).done((response) =>
+			url = apiSettings.api_url + ez5.IUCNUtil.ENDPOINT_SPECIES_PAGE + page
+			ez5.IUCNUtil.get(url, apiSettings.api_token).done((response) =>
 				if not response or response.message
 					return deferred.resolve(response)
 
@@ -42,10 +52,13 @@ class ez5.IUCNUtil
 		fetchPage()
 		return deferred.promise()
 
-	@get: (url) ->
+	@get: (url, api_token) ->
+		# todo CORS problems, because the "authorization" header is missing in OPTIONS request before GET
 		xhr = new CUI.XHR
 			method: "GET"
 			url: url
+			headers:
+				"authorization": api_token
 		return xhr.start()
 
 	@setObjectData: (object, data) ->
@@ -55,24 +68,18 @@ class ez5.IUCNUtil
 			delete object.mainCommonName
 			delete object.category
 			delete object.redList
-			delete object.unclear
 			return
 
-		# TODO: Check this, by default both are not unclear or redlist.
-		object.unclear = false
 		object.redList = false
 
 		if CUI.util.isArray(data)
-			if data.length > 1 # When there is more than 1 result it means that the status is unclear.
-				object.unclear = true
 			data = data[0]
 
-		if not data.taxonid # Not found
+		if not data.taxonid # Not found # todo sis id?
 			object.scientificName = data.scientific_name
 			return object
 
-		if not object.unclear
-			object.redList = data.category in ["EX", "EW", "CR", "EN", "VU"]
+		object.redList = data.category in ["EX", "EW", "CR", "EN", "VU"]
 
 		object.idTaxon = "#{data.taxonid}"
 		object.scientificName = data.scientific_name or ""
@@ -81,7 +88,7 @@ class ez5.IUCNUtil
 		return object
 
 	@isEqual: (objectOne, objectTwo) ->
-		for key in ["idTaxon", "scientificName", "mainCommonName", "category", "redList", "unclear"]
+		for key in ["idTaxon", "scientificName", "mainCommonName", "category", "redList"]
 			if not CUI.util.isEqual(objectOne[key], objectTwo[key])
 				return false
 		return true
@@ -93,7 +100,6 @@ class ez5.IUCNUtil
 			mainCommonName: data.mainCommonName
 			category: data.category
 			redList: data.redList
-			unclear: data.unclear
 			_fulltext:
 				text: "#{data.scientificName} #{data.mainCommonName}"
 				string: "#{data.idTaxon}"
