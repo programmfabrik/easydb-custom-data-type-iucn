@@ -112,30 +112,50 @@ class CustomDataTypeIUCN extends CustomDataType
 				if parts.length > 1
 					species = parts[1]
 
-				ez5.IUCNUtil.searchByTaxonname(genus, species).done((response) ->
+				ez5.IUCNUtil.searchByTaxonname(ez5.IUCNUtil.getPluginEndpoint(), genus, species).done((response) ->
 					if not response
 						CUI.alert(text: $$("custom.data.type.iucn.editor.search.token-invalid"), markdown: true)
 						return
-					_data = response.result
-					if CUI.util.isEmpty(_data)
+
+					_assessment_id = ez5.IUCNUtil.getLatestAssessmentIdFromSearchResult(response)
+					if _assessment_id == 0
 						ez5.IUCNUtil.setObjectData(data, scientific_name: data.searchName)
 					else
-						ez5.IUCNUtil.setObjectData(data, _data)
-					onSearch()
+						ez5.IUCNUtil.getAssessmentData(ez5.IUCNUtil.getPluginEndpoint(), _assessment_id).done((response) ->
+							if not response
+								CUI.alert(text: $$("custom.data.type.iucn.editor.search.token-invalid"), markdown: true)
+								return
+
+							ez5.IUCNUtil.setObjectData(data, response)
+							onSearch()
+						).fail((e) ->
+							ez5.IUCNUtil.setObjectData(data, scientific_name: data.searchName)
+							return
+						)
 				).always(-> searchButton.stopSpinner())
 
 			else
 				# if there are only numbers in the search input, it could be a taxon id
-				ez5.IUCNUtil.searchBySisTaxonId(data.searchName).done((response) ->
+				ez5.IUCNUtil.searchBySisTaxonId(ez5.IUCNUtil.getPluginEndpoint(), data.searchName).done((response) ->
 					if not response
 						CUI.alert(text: $$("custom.data.type.iucn.editor.search.token-invalid"), markdown: true)
 						return
-					_data = response.result
-					if CUI.util.isEmpty(_data)
+
+					_assessment_id = ez5.IUCNUtil.getLatestAssessmentIdFromSearchResult(response)
+					if _assessment_id == 0
 						ez5.IUCNUtil.setObjectData(data, scientific_name: data.searchName)
 					else
-						ez5.IUCNUtil.setObjectData(data, _data)
-					onSearch()
+						ez5.IUCNUtil.getAssessmentData(ez5.IUCNUtil.getPluginEndpoint(), _assessment_id).done((response) ->
+							if not response
+								CUI.alert(text: $$("custom.data.type.iucn.editor.search.token-invalid"), markdown: true)
+								return
+
+							ez5.IUCNUtil.setObjectData(data, response)
+							onSearch()
+						).fail((e) ->
+							ez5.IUCNUtil.setObjectData(data, scientific_name: data.searchName)
+							return
+						)
 				).always(-> searchButton.stopSpinner())
 
 		searchButton = new CUI.Button
@@ -181,7 +201,7 @@ class CustomDataTypeIUCN extends CustomDataType
 		if data.redList
 			statusText = $$("custom.data.type.iucn.output.status.red-list.text")
 		else
-			statusText = $$("custom.data.type.iucn.output.no-status.text")
+			statusText = $$("custom.data.type.iucn.output.status.not-on-red-list.text")
 
 		if isEditor
 			menuButton = new LocaButton

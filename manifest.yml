@@ -17,6 +17,28 @@ plugin:
     logo: image/logo.png
     l10n: l10n/
 
+python-2:
+  # endpoint: <ez5 url>/api/v1/plugin/extension/custom-data-type-iucn/proxy_api_v4
+  file: src/server/main-easydb5.py
+
+extensions:
+
+  # endpoint: <fylr url>/api/v1/plugin/extension/custom-data-type-iucn/proxy_api_v4
+  proxy_api_v4:
+    exec:
+      service: "python3"
+      commands:
+        - prog: "python3"
+          stdin:
+            type: "body"
+          stdout:
+            type: "body"
+          args:
+            - type: "value"
+              value: "%_exec.pluginDir%/src/server/main-fylr.py"
+            - type: "value"
+              value: "%info.json%"
+
 custom_types:
   iucn:
     update:

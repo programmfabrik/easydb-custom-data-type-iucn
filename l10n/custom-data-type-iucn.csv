@@ -1,32 +1,30 @@
-key,de-DE,en-US,da-DK,fi-FI,sv-SE,it-IT,es-ES
-custom.data.type.iucn.editor.menu.delete-button|text,Löschen,Delete,Delete,Poista,Radera,,
-custom.data.type.iucn.editor.search-button.tooltip,Suche,Search,Search,Hae,Sök,,
-custom.data.type.iucn.editor.search-input.placeholder,Suche nach Artnamen,Search by specie name,Search by specie name,Hae lajin nimellä,Sök efter artnamn,,
-custom.data.type.iucn.editor.search.token-invalid,IUCN-Token nicht gültig.,IUCN token not valid.,IUCN token not valid.,IUCN-tunnus ei kelpaa.,IUCN-token är inte giltig.,,
-custom.data.type.iucn.name,IUCN,IUCN,IUCN,IUCN,IUCN,,
-custom.data.type.iucn.output.empty-data,Kein Datensatz,No data set,No data set,Ei tietoja,Inga poster,,
-custom.data.type.iucn.output.no-status.text,Keine Informationen über den Status,No information about status,No information about status,Tilasta ei ole tietoa,Ingen information om status,,
-custom.data.type.iucn.output.status.red-list.text,Ist auf der Roten Liste,It is in the red list,It is in the red list,Se on punaisella listalla,Är på röda listan,,
-custom.data.type.iucn.output.status.unclear.text,Status unklar,Status unclear,Status unclear,Tila epäselvä,Status oklart,,
-server.config.group.system.iucn.introduction,IUCN Konfiguration,IUCN configuration,IUCN configuration,IUCN asetukset,IUCN inställningar,,
-server.config.group.system.iucn.title,IUCN,IUCN,IUCN,IUCN,IUCN,,
+key,de-DE,R,en-US,R,da-DK,R,fi-FI,R,sv-SE,R,fr-FR,R,it-IT,R,es-ES,R
+custom.data.type.iucn.editor.menu.delete-button|text,Löschen,FALSE,Delete,FALSE,Delete,TRUE,Poista,FALSE,Radera,FALSE,Supprimer,FALSE,,FALSE,,FALSE
+custom.data.type.iucn.editor.search-button.tooltip,Suche,FALSE,Search,FALSE,Search,TRUE,Hae,FALSE,Sök,FALSE,Recherche,FALSE,,FALSE,,FALSE
+custom.data.type.iucn.editor.search-input.placeholder,Suche nach Artnamen (lat. binomiale Nomenklatur) oder ID,FALSE,Search by species name (lat. binomial nomenclature) or ID,FALSE,Search by species name (lat. binomial nomenclature) or ID,TRUE,,TRUE,,TRUE,,TRUE,,TRUE,,TRUE
+custom.data.type.iucn.editor.search.token-invalid,IUCN-Token nicht gültig.,FALSE,IUCN token not valid.,FALSE,IUCN token not valid.,TRUE,IUCN-tunnus ei kelpaa.,FALSE,IUCN-token är inte giltig.,FALSE,Token UICN non valide.,FALSE,,FALSE,,FALSE
+custom.data.type.iucn.name,IUCN,FALSE,IUCN,FALSE,IUCN,TRUE,IUCN,FALSE,IUCN,FALSE,UICN,FALSE,,FALSE,,FALSE
+custom.data.type.iucn.output.empty-data,Kein Datensatz,FALSE,No data set,FALSE,No data set,TRUE,Ei tietoja,FALSE,Inga poster,FALSE,Aucun ensemble de données,FALSE,,FALSE,,FALSE
+custom.data.type.iucn.output.no-status.text,Keine Informationen über den Status,FALSE,No information about status,FALSE,No information about status,TRUE,Tilasta ei ole tietoa,FALSE,Ingen information om status,FALSE,Aucune information sur le statut,FALSE,,FALSE,,FALSE
+custom.data.type.iucn.output.status.red-list.text,Ist auf der Roten Liste,FALSE,It is in the red list,FALSE,It is in the red list,TRUE,Se on punaisella listalla,FALSE,Är på röda listan,FALSE,C'est dans la liste rouge,FALSE,,FALSE,,FALSE
+custom.data.type.iucn.output.status.not-on-red-list.text,Ist nicht auf der Roten Liste,FALSE,It is not in the red list,FALSE,It is not in the red list,TRUE,,TRUE,,TRUE,,TRUE,,TRUE,,TRUE
+server.config.group.system.iucn.introduction,IUCN Konfiguration,FALSE,IUCN configuration,FALSE,IUCN configuration,TRUE,IUCN asetukset,FALSE,IUCN inställningar,FALSE,Configuration de l'UICN,FALSE,,FALSE,,FALSE
+server.config.group.system.iucn.title,IUCN,FALSE,IUCN,FALSE,IUCN,TRUE,IUCN,FALSE,IUCN,FALSE,UICN,FALSE,,FALSE,,FALSE
 "server.config.group.system.plugin_custom-data-type-iucn.introduction
-",Einstellungen für das IUCN-Plugin,Settings for the IUCN plugin,Settings for the IUCN plugin,IUCN-laajennuksen asetukset,Inställningar för IUCN plugin,,
-server.config.group.system.plugin_custom-data-type-iucn.title,IUCN,IUCN,IUCN,IUCN,IUCN,,
-server.config.name.system.iucn_api_settings,API Einstellungen,API settings,API settings,API-asetukset,API inställningar,,
-server.config.name.system.iucn_easydb_settings,easydb Einstellungen,easydb settings,easydb settings,EasyDB-asetukset,easydb inställningar,,
-server.config.name.system.iucn_settings,Einstellungen,Settings,Settings,Asetukset,Inställningar,,
-server.config.name.system.update_interval_iucn,IUCN Updater,IUCN Updater,IUCN Updater,IUCN päivitys,IUCN-uppdatering,,
-server.config.parameter.system.iucn_api_settings.api_token.label,Token,Token,Token,Token,Token,,
-server.config.parameter.system.iucn_api_settings.api_url.label,URL,URL,URL,URL-osoite,URL-adress,,
-server.config.parameter.system.iucn_easydb_settings.easydb_login.label,Benutzername,Username,Username,Käyttäjätunnus,Username,,
-server.config.parameter.system.iucn_easydb_settings.easydb_password.label,Passwort,Password,Password,Salasana,Lösenord,,
-server.config.parameter.system.iucn_settings.iucn_fields.label,IUCN Felder,IUCN Fields,IUCN Fields,IUCN-kentät,IUCN-fält,,
-server.config.parameter.system.iucn_settings.iucn_fields.placeholder,- IUCN Feld auswählen -,- Select IUCN field -,- Select IUCN field -,- Valitse IUCN-kenttä -,- Välj IUCN-fält-,,
-server.config.parameter.system.iucn_settings.objecttypes.direct.label,Objecttype mit Verwendung des benutzerdefinierten Datentyps IUCN,Object type with usage of custom data type IUCN,Object type with usage of custom data type IUCN,"Objektityyppi, jossa käytetään mukautettua tietotyyppiä IUCN",Objekttyp som använder en användardefinierad IUCN-datatyp,,
-server.config.parameter.system.iucn_settings.objecttypes.link.label,Objekttyp mit Verwendung des zuvor ausgewählten Objekttyps,Object type with usage of the previously selected objecttype,Object type with usage of the previously selected objecttype,"Objektityyppi, jossa käytetään aiemmin valittua objektityyppiä",Objekttyp med den tidigare valda objekttypen,,
-server.config.parameter.system.iucn_settings.tag_red.label,Rote Liste Tag,Red list tag,Red list tag,Punaisen listan tunniste,Röd lista tagg,,
-server.config.parameter.system.iucn_settings.tag_unclear.label,Unklar Tag,Unclear tag,Unclear tag,Epäselvä tunniste,Oklart tagg,,
-server.config.parameter.system.iucn_settings.tag.placeholder.tag_red,Rote Liste Tag auswählen,Select red list tag,Select red list tag,Valitse punaisen listan tunniste,Välj röd lista tagg,,
-server.config.parameter.system.iucn_settings.tag.placeholder.tag_unclear,Unklar Tag auswählen,Select unclear tag,Select unclear tag,Valitse epäselvä tunniste,Välj oklart tagg,,
-server.config.parameter.system.update_interval_iucn.days.label,Tage zwischen Updates,Days between updates,Days between updates,Päivitysten väli päivissä,Dagar mellan uppdateringar,,
+",Einstellungen für das IUCN-Plugin,FALSE,Settings for the IUCN plugin,FALSE,Settings for the IUCN plugin,TRUE,IUCN-laajennuksen asetukset,FALSE,Inställningar för IUCN plugin,FALSE,Paramètres du plugin UICN,FALSE,,FALSE,,FALSE
+server.config.group.system.plugin_custom-data-type-iucn.title,IUCN,FALSE,IUCN,FALSE,IUCN,TRUE,IUCN,FALSE,IUCN,FALSE,UICN,FALSE,,FALSE,,FALSE
+server.config.name.system.iucn_api_settings,API Einstellungen,FALSE,API settings,FALSE,API settings,TRUE,API-asetukset,FALSE,API inställningar,FALSE,Paramètres de l'API,FALSE,,FALSE,,FALSE
+server.config.name.system.iucn_easydb_settings,easydb Einstellungen,FALSE,easydb settings,FALSE,easydb settings,TRUE,easydb-asetukset,FALSE,easydb inställningar,FALSE,paramètres easydb,FALSE,,FALSE,,FALSE
+server.config.name.system.iucn_settings,Einstellungen,FALSE,Settings,FALSE,Settings,TRUE,Asetukset,FALSE,Inställningar,FALSE,Paramètres,FALSE,,FALSE,,FALSE
+server.config.name.system.update_interval_iucn,IUCN Updater,FALSE,IUCN Updater,FALSE,IUCN Updater,TRUE,IUCN päivitys,FALSE,IUCN-uppdatering,FALSE,Actualisé l'UICN,FALSE,,FALSE,,FALSE
+server.config.parameter.system.iucn_api_settings.api_token.label,Token,FALSE,Token,FALSE,Token,TRUE,Token,FALSE,Token,FALSE,Token,FALSE,,FALSE,,FALSE
+server.config.parameter.system.iucn_api_settings.api_url.label,URL,FALSE,URL,FALSE,URL,TRUE,URL-osoite,FALSE,URL-adress,FALSE,URL,FALSE,,FALSE,,FALSE
+server.config.parameter.system.iucn_easydb_settings.easydb_login.label,Benutzername,FALSE,Username,FALSE,Username,TRUE,Käyttäjätunnus,FALSE,Username,FALSE,Nom d'utilisateur,FALSE,,FALSE,,FALSE
+server.config.parameter.system.iucn_easydb_settings.easydb_password.label,Passwort,FALSE,Password,FALSE,Password,TRUE,Salasana,FALSE,Lösenord,FALSE,Mot de passe,FALSE,,FALSE,,FALSE
+server.config.parameter.system.iucn_settings.iucn_fields.label,IUCN Felder,FALSE,IUCN Fields,FALSE,IUCN Fields,TRUE,IUCN-kentät,FALSE,IUCN-fält,FALSE,Champs de l'UICN,FALSE,,FALSE,,FALSE
+server.config.parameter.system.iucn_settings.iucn_fields.placeholder,- IUCN Feld auswählen -,FALSE,- Select IUCN field -,FALSE,- Select IUCN field -,TRUE,- Valitse IUCN-kenttä -,FALSE,- Välj IUCN-fält-,FALSE,- Sélectionnez le champ UICN -,FALSE,,FALSE,,FALSE
+server.config.parameter.system.iucn_settings.objecttypes.direct.label,Objecttype mit Verwendung des benutzerdefinierten Datentyps IUCN,FALSE,Object type with usage of custom data type IUCN,FALSE,Object type with usage of custom data type IUCN,TRUE,"Objektityyppi, jossa käytetään mukautettua tietotyyppiä IUCN",FALSE,Objekttyp som använder en användardefinierad IUCN-datatyp,FALSE,Type d'objet avec utilisation du type de données personnalisé UICN,FALSE,,FALSE,,FALSE
+server.config.parameter.system.iucn_settings.objecttypes.link.label,Objekttyp mit Verwendung des zuvor ausgewählten Objekttyps,FALSE,Object type with usage of the previously selected objecttype,FALSE,Object type with usage of the previously selected objecttype,TRUE,"Objektityyppi, jossa käytetään aiemmin valittua objektityyppiä",FALSE,Objekttyp med den tidigare valda objekttypen,FALSE,Type d'objet avec utilisation du type d'objet précédemment sélectionné,FALSE,,FALSE,,FALSE
+server.config.parameter.system.iucn_settings.tag_red.label,Rote Liste Tag,FALSE,Red list tag,FALSE,Red list tag,TRUE,Punaisen listan tunniste,FALSE,Röd lista tagg,FALSE,Étiquette de la liste rouge,FALSE,,FALSE,,FALSE
+server.config.parameter.system.iucn_settings.tag.placeholder.tag_red,Rote Liste Tag auswählen,FALSE,Select red list tag,FALSE,Select red list tag,TRUE,Valitse punaisen listan tunniste,FALSE,Välj röd lista tagg,FALSE,Sélectionnez le tag de la liste rouge,FALSE,,FALSE,,FALSE
+server.config.parameter.system.update_interval_iucn.days.label,Tage zwischen Updates,FALSE,Days between updates,FALSE,Days between updates,TRUE,Päivitysten väli päivissä,FALSE,Dagar mellan uppdateringar,FALSE,Nombre de jours entre les mises à jour,FALSE,,FALSE,,FALSE
