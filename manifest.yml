@@ -17,6 +17,28 @@ plugin:
     logo: image/logo.png
     l10n: l10n/
 
+python-2:
+  # endpoint: <ez5 url>/api/v1/plugin/extension/custom-data-type-iucn/proxy_api_v4
+  file: src/server/main-easydb5.py
+
+extensions:
+
+  # endpoint: <fylr url>/api/v1/plugin/extension/custom-data-type-iucn/proxy_api_v4
+  proxy_api_v4:
+    exec:
+      service: "python3"
+      commands:
+        - prog: "python3"
+          stdin:
+            type: "body"
+          stdout:
+            type: "body"
+          args:
+            - type: "value"
+              value: "%_exec.pluginDir%/src/server/main-fylr.py"
+            - type: "value"
+              value: "%info.json%"
+
 custom_types:
   iucn:
     update:
@@ -46,6 +68,7 @@ base_config:
     parameters:
       api_url:
         type: text
+        default: "https://api.iucnredlist.org/api/v4"
         position: 0
       api_token:
         type: text
@@ -67,13 +90,9 @@ base_config:
         type: int
         position: 0
         plugin_type: "iucn_tag"
-      tag_unclear:
-        type: int
-        position: 1
-        plugin_type: "iucn_tag"
       iucn_fields:
         type: table
-        position: 2
+        position: 1
         fields:
           - name: iucn_field_name
             type: text
