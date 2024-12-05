@@ -52,7 +52,7 @@ class IUCNUpdate
 				password: password
 			)
 
-		easydbApiUrl = data.server_config.system?.server?.internal_url
+		easydbApiUrl = data.server_config.system?.server?.external_url
 		if not easydbApiUrl
 			return CUI.rejectedPromise("custom.data.type.iucn.start-update.error.easydb-api-url-not-configured")
 
