@@ -6,25 +6,26 @@ class ez5.IUCNUtil
 		return "custom:base.custom-data-type-iucn.iucn"
 
 	@getAssessmentData: (plugin_endpoint, assessment_id) ->
-		return ez5.IUCNUtil.getFromPlugin("/assessment/" + assessment_id)
+		return ez5.IUCNUtil.getFromPlugin("/assessment/" + assessment_id, plugin_endpoint)
 
 	@searchByTaxonname: (plugin_endpoint, genus, species) ->
-		return ez5.IUCNUtil.getFromPlugin("/taxa/scientific_name?genus_name=" + encodeURIComponent(genus) + "&species_name=" + encodeURIComponent(species))
+		return ez5.IUCNUtil.getFromPlugin("/taxa/scientific_name?genus_name=" + encodeURIComponent(genus) + "&species_name=" + encodeURIComponent(species), plugin_endpoint)
 
 	@searchBySisTaxonId: (plugin_endpoint, sis_taxon_id) ->
-		return ez5.IUCNUtil.getFromPlugin("/taxa/sis/" + sis_taxon_id)
+		return ez5.IUCNUtil.getFromPlugin("/taxa/sis/" + sis_taxon_id, plugin_endpoint)
 
-	@getFromPlugin: (iucn_query) ->
+	@getFromPlugin: (iucn_query, url = null) ->
+		url = url or ez5.IUCNUtil.getPluginEndpoint()
+		url = url + "?iucn_query=" + iucn_query
 		xhr = new CUI.XHR
 			method: "GET"
-			url: ez5.IUCNUtil.getPluginEndpoint()
+			url: url
 			headers:
 				# for simplification: include authorization for easydb5 and fylr
 				# this causes no problems and the servers will use the correct one
 				"authorization": 'Bearer ' + ez5.session.token
 				"x-easydb-token": ez5.session.token
-			url_data:
-				iucn_query: iucn_query
+
 		return xhr.start()
 
 	@setObjectData: (object, data) ->

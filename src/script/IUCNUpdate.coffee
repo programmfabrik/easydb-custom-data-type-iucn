@@ -101,28 +101,7 @@ class IUCNUpdate
 		if not data.state.easydbToken
 			return CUI.rejectedPromise("custom.data.type.iucn.update.error.not-easydb-token-in-state")
 
-		# Some objects will contain the ID and it is necessary to make the search by id, otherwise they will contain the
-		# scientific name.
-		objectsByIdMap= {}
-		objectsByNameMap= {}
-
-		for object in data.objects
-			if not (object.identifier and object.data)
-				continue
-
-			if not object.data.idTaxon and not object.data.scientificName
-				continue
-
-			if object.data.idTaxon
-				idTaxon = object.data.idTaxon
-				if not objectsByIdMap[idTaxon]
-					objectsByIdMap[idTaxon] = []
-				objectsByIdMap[idTaxon].push(object)
-			else
-				scientificName = object.data.scientificName
-				if not objectsByNameMap[scientificName]
-					objectsByNameMap[scientificName] = []
-				objectsByNameMap[scientificName].push(object)
+		deferred = new CUI.Deferred()
 
 		objectsToUpdate = []
 		objectsToUpdateTags = []
@@ -131,116 +110,111 @@ class IUCNUpdate
 		speciesByName = {}
 		speciesById = {}
 
-		# load records by taxon id or scientfic name
+		# This is expected to be the endpoint of the plugin.
+		ez5.session = {
+			token: data.state.easydbToken
+		}
+		endpoint = data.state.easydbUrl + "/plugin/extension/custom-data-type-iucn/proxy_api_v4"
+		searchIdx = 0
 
-		# todo this block needs to be reworked, the fetchAllSpecies method was removed because it does not work with the new api
-		# there is no single request anymore, but instead single requests for each object:
-		# for each object, there are 2 requests (like for the search that is done in the frontend, this is already finished and works):
-		# (all requests do not go to the repository directly, but to the internal plugin endpoint)
-		#
-		# 1) search for objects:
-		# 	* by the taxon id (all objects in objectsByIdMap) -> searchBySisTaxonId()
-		# 	* or by the scientific name (all objects in objectsByNameMap) -> searchByTaxonname()
-		# 2) load the assessment that is returned in the search result -> getAssessmentData()
-		#	* the assessment contains the actual data
-		#
-		# Important: the new IUCN API has a rate limit of 120 requests per minute, so not more than 60 objects can be processed per minute
-		# if the requests are returned faster than 0.5 seconds per request, a delay must be added so that the maximum number of 120 requests is never reached
-		# otherwise the next requests will fail with a 429 http error
-
-
-
+		process_object = (object) =>
+			dfr = new CUI.Deferred()
+			# Start measuring time
+			startTime = process.hrtime()
+			if object.data.idTaxon
+				console.log "Search by taxon id: #{JSON.stringify(object.data.idTaxon)}"
+				searchPromise = ez5.IUCNUtil.searchBySisTaxonId(endpoint, object.data.idTaxon)
+			else
+				console.log "Searching by taxon name: #{object.data.scientificName}"
+				searchPromise = ez5.IUCNUtil.searchByTaxonname(endpoint, object.data.scientificName)
 
 
-		# deferred = new CUI.Deferred()
-		# ez5.IUCNUtil.fetchAllSpecies(apiSettings).done((response) =>
+			# The search of an object is made in two steps:
+			# 1) Search by taxon id or scientific name
+			# 2) Get the assessment data
+			searchPromise.done( (response) ->
+				if CUI.util.isEmpty response
+					# If the response is empty, it means that the object was not found in the IUCN API.
+					# We need to clear the tags of objects linking to those objects. We will do that later.
+					objectsNotFound.push(object)
+					dfr.resolve()
+					return
+				_assessment_id = ez5.IUCNUtil.getLatestAssessmentIdFromSearchResult(response)
+				ez5.IUCNUtil.getAssessmentData(endpoint, _assessment_id).done((response) ->
+					if CUI.util.isEmpty response
+						objectsNotFound.push(object)
+						dfr.resolve()
+						return
+					foundData = ez5.IUCNUtil.setObjectData({}, response)
+					object.data = ez5.IUCNUtil.getSaveData(foundData)
+					object.data.__updateTags = true
+					objectsToUpdateTags.push(object)
+					objectsToUpdate.push(object)
 
-		# 	# The response of the API returns 200 - 'message': "Token not valid!" when the token is not valid.
-		# 	# For now we will be using this to check it.
-		# 	if not response
-		# 		_data = iucn_api_settings: apiSettings
-		# 		ez5.respondError("custom.data.type.iucn.update.error.iucn-api-empty-response", data: _data)
-		# 		return deferred.reject()
-		# 	if response.message == "Token not valid!"
-		# 		_data =
-		# 			iucn_api_settings: apiSettings
-		# 			response: response
-		# 		ez5.respondError("custom.data.type.iucn.update.error.iucn-api-token-not-valid", data: _data)
-		# 		return deferred.reject()
-
-		# 	# Save objects in two maps to be able to quickly access by id and by scientific name.
-		# 	for object in response.objects
-		# 		speciesById[object.taxonid] = object
-		# 		if not speciesByName[object.scientific_name]
-		# 			speciesByName[object.scientific_name] = []
-		# 		speciesByName[object.scientific_name].push(object)
-
-		# 	for scientificName in Object.keys(objectsByNameMap)
-		# 		objectsFound = speciesByName[scientificName]
-		# 		if CUI.util.isEmpty(objectsFound)
-		# 			continue
-		# 		foundData = ez5.IUCNUtil.setObjectData({}, objectsFound)
-		# 		for object in objectsByNameMap[scientificName]
-		# 			object.data = ez5.IUCNUtil.getSaveData(foundData)
-		# 			object.data.__updateTags = true
-		# 			objectsToUpdateTags.push(object)
-		# 			objectsToUpdate.push(object)
-
-		# 	for id in Object.keys(objectsByIdMap)
-		# 		objectFound = speciesById[id]
-		# 		if CUI.util.isEmpty(objectFound)
-		# 			continue
-		# 		foundData = ez5.IUCNUtil.setObjectData({}, objectFound)
-		# 		for object in objectsByIdMap[id]
-		# 			object.data = ez5.IUCNUtil.getSaveData(foundData)
-		# 			if not !!object.data.__updateTags
-		# 				object.data.__updateTags = true
-		# 				objectsToUpdateTags.push(object)
-		# 			objectsToUpdate.push(object)
-
+					# Check elapsed time
+					endTime = process.hrtime(startTime)
+					# endTime[0] is seconds, endTime[1] is nanoseconds
+					elapsedMs = (endTime[0] * 1000) + (endTime[1] / 1000000)
+					# If less than 1000ms have passed, we can decide to wait the remaining time
+					# so that each request takes at least 1 second
+					desiredDelay = 1000  # 1 second in ms
+					if elapsedMs < desiredDelay
+						remainingTime = desiredDelay - elapsedMs
+						setTimeout(() ->
+							dfr.resolve()
+						, remainingTime)
+					else
+						dfr.resolve()
+				).fail((e) ->
+					dfr.reject()
+				)
+			).fail((e) ->
+				console.log "Search by taxon id failed: " + e
+				dfr.reject()
+			)
+			return dfr.promise()
 
 
+		console.log "Start Processing Objects"
+		# IMPORTANT: The v4 API has a limit of 120 requests per minute.
+		# So we need to wait at least 1 second between requests. (we make 2 requests per object)
+		CUI.chunkWork.call(@,
+			items: data.objects
+			chunk_size: 1
+			call: (batch) =>
+				return process_object(batch[0])
+		).fail( =>
+			ez5.respondError("custom.data.type.iucn.update.error.iucn-api-call")
+		).done( =>
+			console.log("All objects processed")
+			console.log "Objects to update: #{objectsToUpdate.length}"
+			console.log "Objects to update tags: #{objectsToUpdateTags.length}"
+			console.log "Objects not found: #{objectsNotFound.length}"
 
+			for objectNotFound in objectsNotFound
+				objectNotFound.redList = false
+				objectsToUpdate.push(objectNotFound)
+				objectsToUpdateTags.push(objectNotFound)
 
+			@__updateTags(objectsToUpdateTags, data).done(=>
+				response = payload: objectsToUpdate
+				if data.batch_info and data.batch_info.offset + data.objects.length >= data.batch_info.total
+					easydbUrl = @__getEasydbUrl(easydbApiUrl)
+					xhr = new CUI.XHR
+						method: "POST"
+						url: "#{easydbUrl}/session/deauthenticate"
+					xhr.start().always(=>
+						ez5.respondSuccess(response)
+					)
+				else
+					ez5.respondSuccess(response)
+			).fail((messageKey, opts = {}) =>
+				ez5.respondError(messageKey, opts)
+			)
 
-		# todo this logic here should still work the same as before
-		# it is used to map the results from the remote api into the existing objects and set tags
+		)
+		return deferred.promise()
 
-		# 	# If any of the given objects are not in the update array then it means that they were not found in the IUCN API.
-		# 	# We need to clear the tags of objects linking to those objects.
-		# 	objectsNotFound = data.objects.filter((object) ->
-		# 		not objectsToUpdate.find((objectToUpdate) -> objectToUpdate.identifier == object.identifier)
-		# 	)
-
-		# 	for objectNotFound in objectsNotFound
-		# 		objectNotFound.redList = false
-		# 		objectsToUpdate.push(objectNotFound)
-		# 		objectsToUpdateTags.push(objectNotFound)
-
-		# 	@__updateTags(objectsToUpdateTags, data).done(=>
-		# 		response = payload: objectsToUpdate
-		# 		if data.batch_info and data.batch_info.offset + data.objects.length >= data.batch_info.total
-		# 			easydbUrl = @__getEasydbUrl(easydbApiUrl)
-		# 			xhr = new CUI.XHR
-		# 				method: "POST"
-		# 				url: "#{easydbUrl}/session/deauthenticate"
-		# 			xhr.start().always(=>
-		# 				ez5.respondSuccess(response)
-		# 			)
-		# 		else
-		# 			ez5.respondSuccess(response)
-		# 	).fail((messageKey, opts = {}) =>
-		# 		ez5.respondError(messageKey, opts)
-		# 	)
-		# ).fail((responseError) =>
-		# 	_data =
-		# 		errorData: responseError.data
-		# 		apiCall: ez5.IUCNUtil.ENDPOINT_SPECIES_PAGE
-		# 		apiSettings: apiSettings
-		# 	ez5.respondError("custom.data.type.iucn.update.error.iucn-api-call", data: _data, responseError.status)
-		# 	return deferred.reject()
-		# )
-		# return deferred.promise()
 
 	__updateTags: (objects, data) ->
 		if objects.length == 0
