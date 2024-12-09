@@ -121,12 +121,23 @@ class IUCNUpdate
 			dfr = new CUI.Deferred()
 			# Start measuring time
 			startTime = process.hrtime()
-			if object.data.idTaxon
-				console.log "Search by taxon id: #{JSON.stringify(object.data.idTaxon)}"
+			if not CUI.util.isEmpty(object.data.idTaxon)
+				# console.log "Search by taxon id: #{JSON.stringify(object.data.idTaxon)}"
 				searchPromise = ez5.IUCNUtil.searchBySisTaxonId(endpoint, object.data.idTaxon)
+			else if not CUI.util.isEmpty(object.data.scientificName)
+				# console.log "Searching by taxon name: #{object.data.scientificName}"
+				parts = object.data.scientificName.split(/\s+/).filter (part) -> part.trim() != ""
+				genus = ""
+				species = ""
+				if parts.length > 0
+					genus = parts[0]
+				if parts.length > 1
+					species = parts[1]
+				searchPromise = ez5.IUCNUtil.searchByTaxonname(endpoint, genus, species)
 			else
-				console.log "Searching by taxon name: #{object.data.scientificName}"
-				searchPromise = ez5.IUCNUtil.searchByTaxonname(endpoint, object.data.scientificName)
+				# console.log "No taxon id or scientific name found"
+				dfr.reject()
+				return dfr.promise()
 
 
 			# The search of an object is made in two steps:
@@ -169,13 +180,13 @@ class IUCNUpdate
 					dfr.reject()
 				)
 			).fail((e) ->
-				console.log "Search by taxon id failed: " + e
+				# console.log "Search by taxon id failed: " + e
 				dfr.reject()
 			)
 			return dfr.promise()
 
 
-		console.log "Start Processing Objects"
+		# console.log "Start Processing Objects"
 		# IMPORTANT: The v4 API has a limit of 120 requests per minute.
 		# So we need to wait at least 1 second between requests. (we make 2 requests per object)
 		CUI.chunkWork.call(@,
@@ -186,10 +197,10 @@ class IUCNUpdate
 		).fail( =>
 			ez5.respondError("custom.data.type.iucn.update.error.iucn-api-call")
 		).done( =>
-			console.log("All objects processed")
-			console.log "Objects to update: #{objectsToUpdate.length}"
-			console.log "Objects to update tags: #{objectsToUpdateTags.length}"
-			console.log "Objects not found: #{objectsNotFound.length}"
+			# console.log("All objects processed")
+			# console.log "Objects to update: #{objectsToUpdate.length}"
+			# console.log "Objects to update tags: #{objectsToUpdateTags.length}"
+			# console.log "Objects not found: #{objectsNotFound.length}"
 
 			for objectNotFound in objectsNotFound
 				objectNotFound.redList = false
