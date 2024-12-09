@@ -16,10 +16,12 @@ class ez5.IUCNUtil
 
 	@getFromPlugin: (iucn_query, url = null) ->
 		url = url or ez5.IUCNUtil.getPluginEndpoint()
-		url = url + "?iucn_query=" + iucn_query
+		url_data= {
+			"iucn_query": iucn_query
+		}
 		xhr = new CUI.XHR
 			method: "GET"
-			url: url
+			url: CUI.appendToUrl(url, url_data)
 			headers:
 				# for simplification: include authorization for easydb5 and fylr
 				# this causes no problems and the servers will use the correct one
