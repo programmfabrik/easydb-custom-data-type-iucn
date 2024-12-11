@@ -207,7 +207,7 @@ class IUCNUpdate
 				objectsToUpdate.push(objectNotFound)
 				objectsToUpdateTags.push(objectNotFound)
 
-			@__updateTags(objectsToUpdateTags, data).done(=>
+			@__updateTags(objectsToUpdateTags, data).done( =>
 				response = payload: objectsToUpdate
 				if data.batch_info and data.batch_info.offset + data.objects.length >= data.batch_info.total
 					easydbUrl = @__getEasydbUrl(easydbApiUrl)
@@ -230,6 +230,8 @@ class IUCNUpdate
 	__updateTags: (objects, data) ->
 		if objects.length == 0
 			return CUI.resolvedPromise()
+
+		#console.log "Updating tags of objects", JSON.stringify(objects, null, 2), "with data", JSON.stringify(data, null, 2)
 
 		easydbUrl = @__getEasydbUrl(data.state.easydbUrl)
 		iucnSettings = data.state.config.iucn_settings
@@ -288,9 +290,11 @@ class IUCNUpdate
 						"_tags:group_mode": "tag_remove"
 
 					if item.data.redList
+						#console.log "Adding red list tag to object with idTaxon: #{item.data.idTaxon}, scientificName: #{item.data.scientificName}, Item: #{JSON.stringify(item, null, 2)}"
 						addTagBody._tags.push(_id: idTagRed)
 						removeTagBody = null
 					else
+						#console.log "Removing red list tag from object with idTaxon: #{item.data.idTaxon}, scientificName: #{item.data.scientificName}, Item: #{JSON.stringify(item, null, 2)}"
 						removeTagBody._tags.push(_id: idTagRed)
 						addTagBody = null
 					#
@@ -299,6 +303,7 @@ class IUCNUpdate
 					# When the item is in the red list, it adds the red list tag.
 					# Otherwise, it removes all tags.
 					update = (objects) ->
+						# console.log("Updating tags of objects", JSON.stringify(objects, null, 2))
 						idObjectsByObjecttype = {}
 						objects.forEach((object) =>
 							objecttype = object._objecttype
@@ -308,19 +313,30 @@ class IUCNUpdate
 							idObjectsByObjecttype[objecttype].push(idObject)
 						)
 
+						#console.log "Updating tags of objects: #{JSON.stringify(idObjectsByObjecttype, null, 2)}"
+
 						updatePromises = []
 						for objecttype, ids of idObjectsByObjecttype
+							#console.log "Updating tags of objecttype: #{objecttype}, ids: #{JSON.stringify(ids, null, 2)}"
 							_removeTagBody = CUI.util.copyObject(removeTagBody, true)
 							_addTagBody = CUI.util.copyObject(addTagBody, true)
 
-							_removeTagBody._objecttype = objecttype
-							_removeTagBody[objecttype] = _id: ids
-							body = [_removeTagBody]
+							#console.log "Remove tags body: #{JSON.stringify(_removeTagBody, null, 2)}"
+							#console.log "Add tags body: #{JSON.stringify(_addTagBody, null, 2)}"
+
+							body = []
+
+							if _removeTagBody
+								_removeTagBody._objecttype = objecttype
+								_removeTagBody[objecttype] = _id: ids
+								body.push(_removeTagBody)
 
 							if _addTagBody
 								_addTagBody._objecttype = objecttype
 								_addTagBody[objecttype] = _id: ids
 								body.push(_addTagBody)
+
+							#console.log "Update tags body: #{JSON.stringify(body, null, 2)}"
 
 							updateTagsOpts =
 								method: "POST"
@@ -328,6 +344,8 @@ class IUCNUpdate
 								headers:
 									'x-easydb-token': easydbToken
 								body: body
+
+							#console.log "Update tags request: #{JSON.stringify(updateTagsOpts, null, 2)}"
 
 							xhrUpdateTags = new CUI.XHR(updateTagsOpts)
 							updateTagsPromise = xhrUpdateTags.start().fail((e) =>
@@ -364,7 +382,9 @@ class IUCNUpdate
 									format: "short",
 									objecttypes: objecttypes
 							xhrLinkSearch = new CUI.XHR(searchOpts)
+							# console.log "Search for linked objects: #{JSON.stringify(searchOpts, null, 2)}"
 							xhrLinkSearch.start().done((response) =>
+								# console.log("Search for linked objects - Response: #{JSON.stringify(response, null, 2)}")
 								if not response.objects or response.objects.length == 0
 									searchLinkedDeferred.resolve()
 									return
@@ -388,6 +408,7 @@ class IUCNUpdate
 
 					# Search for objects containing idTaxon.
 					search = (offset = 0) =>
+						#console.log "Searching objects with idTaxon: #{item.data.idTaxon}"
 						objecttypes = _fields.map((fullname) -> fullname.split(".")[0])
 						searchOpts =
 							method: "POST"
@@ -407,14 +428,18 @@ class IUCNUpdate
 								objecttypes: objecttypes
 						xhrSearch = new CUI.XHR(searchOpts)
 						xhrSearch.start().done((response) =>
+							# console.log("Search for objects with idTaxon: #{item.data.idTaxon} - Response: #{JSON.stringify(response, null, 2)}")
 							if not response.objects or response.objects.length == 0
+								#console.log "No objects found for search: #{JSON.stringify(searchOpts, null, 2)}"
 								deferred.resolve()
 								return
 							objects = response.objects
 
 							if linked
+								# console.log("Search for linked objects")
 								promise = searchLinked(objects)
 							else
+								# console.log "Update objects"
 								promise = update(objects)
 
 							promise.done(=>
@@ -436,6 +461,8 @@ class IUCNUpdate
 					return deferred.promise()
 
 				# Update tags is called twice, one for normal fields and one for linked objects.
+				#console.log("Update Tags for fields ", JSON.stringify(fields, null, 2))
+				#console.log("Update Tags for linked fields ", JSON.stringify(linkedFields, null, 2))
 				return CUI.when(updateTags(fields), updateTags(linkedFields, true))
 		)
 
