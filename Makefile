@@ -17,6 +17,9 @@ INSTALL_FILES = \
 	build/scripts/iucn-update.js \
 	$(CSS) \
 	$(JS) \
+	src/server/__init__.py \
+	src/server/main-easydb5.py \
+	src/server/shared.py \
 	manifest.yml
 
 COFFEE_FILES = src/webfrontend/IUCNUtil.coffee \
