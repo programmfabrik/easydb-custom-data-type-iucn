@@ -118,7 +118,7 @@ class CustomDataTypeIUCN extends CustomDataType
 						return
 
 					_assessment_id = ez5.IUCNUtil.getLatestAssessmentIdFromSearchResult(response)
-					if _assessment_id == 0
+					if _assessment_id == 0 or CUI.util.isEmpty(response)
 						ez5.IUCNUtil.setObjectData(data, scientific_name: data.searchName)
 					else
 						ez5.IUCNUtil.getAssessmentData(ez5.IUCNUtil.getPluginEndpoint(), _assessment_id).done((response) ->
@@ -142,7 +142,7 @@ class CustomDataTypeIUCN extends CustomDataType
 						return
 
 					_assessment_id = ez5.IUCNUtil.getLatestAssessmentIdFromSearchResult(response)
-					if _assessment_id == 0
+					if _assessment_id == 0 or CUI.util.isEmpty(response)
 						ez5.IUCNUtil.setObjectData(data, scientific_name: data.searchName)
 					else
 						ez5.IUCNUtil.getAssessmentData(ez5.IUCNUtil.getPluginEndpoint(), _assessment_id).done((response) ->
