@@ -120,6 +120,7 @@ class CustomDataTypeIUCN extends CustomDataType
 					_assessment_id = ez5.IUCNUtil.getLatestAssessmentIdFromSearchResult(response)
 					if _assessment_id == 0 or CUI.util.isEmpty(response)
 						ez5.IUCNUtil.setObjectData(data, scientific_name: data.searchName)
+						onSearch()
 					else
 						ez5.IUCNUtil.getAssessmentData(ez5.IUCNUtil.getPluginEndpoint(), _assessment_id).done((response) ->
 							if not response
@@ -144,6 +145,7 @@ class CustomDataTypeIUCN extends CustomDataType
 					_assessment_id = ez5.IUCNUtil.getLatestAssessmentIdFromSearchResult(response)
 					if _assessment_id == 0 or CUI.util.isEmpty(response)
 						ez5.IUCNUtil.setObjectData(data, scientific_name: data.searchName)
+						onSearch()
 					else
 						ez5.IUCNUtil.getAssessmentData(ez5.IUCNUtil.getPluginEndpoint(), _assessment_id).done((response) ->
 							if not response
@@ -229,7 +231,12 @@ class CustomDataTypeIUCN extends CustomDataType
 
 		if data.idTaxon
 			content = new CUI.VerticalList(content: [
-				new CUI.Label(text: data.mainCommonName, appearance: "title", multiline: true)
+				new CUI.ButtonHref
+					text: data.mainCommonName
+					class: "pluginResultButton"
+					appearance: "link"
+					href: "https://apistaging.iucnredlist.org/species/" + data.idTaxon
+					target: "_blank"
 				new CUI.Label(text: "#{data.idTaxon} - #{data.scientificName}", appearance: "secondary")
 				new CUI.Label(text: statusText, appearance: "secondary")
 			])

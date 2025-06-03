@@ -91,7 +91,7 @@ class ez5.IUCNUtil
 			redList: data.redList
 			_fulltext:
 				text: "#{data.scientificName} #{data.mainCommonName}"
-				string: "#{data.idTaxon}"
+				string: if data.idTaxon? then "#{data.idTaxon}" else ""
 			_standard:
 				text: data.scientificName
 		return saveData
