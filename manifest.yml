@@ -6,8 +6,18 @@ plugin:
     en-US: "Custom Data Type: IUCN"
     de-DE: "Custom Data Type: IUCN"
   info:
-    de-DE: IUCN
-    en-US: IUCN
+    de-DE: |
+      Ein Feldtyp (Custom Data Type), mit dem sich Datensätze mit der [Roten Liste gefährdeter Arten der IUCN](https://www.iucnredlist.org/) verknüpfen lassen. Redakteure durchsuchen die IUCN-Datenbank direkt im Editor und speichern einen Verweis, den ein Hintergrundprozess aktuell hält.
+
+      - Suche über die SIS-ID oder den wissenschaftlichen Namen (Gattung und Art, z. B. „Canis lupus“)
+      - Ein täglicher Updater aktualisiert verknüpfte Einträge bei Änderungen der Roten Liste
+      - Optional wird ein konfigurierbares „Rote-Liste“-Tag automatisch gesetzt oder entfernt, je nachdem ob die Art aktuell gelistet ist
+    en-US: |
+      A custom data type for linking records to the [IUCN Red List of Threatened Species](https://www.iucnredlist.org/). Editors search the IUCN database from the record editor and store a reference that a background process keeps in sync.
+
+      - Search by SIS ID or by scientific name (genus and species, e.g. "Canis lupus")
+      - A daily updater refreshes linked entries as the Red List changes
+      - Can automatically add or remove a configurable "Red List" tag on records whose species is currently listed
   server:
     api-version:
       require: 1
